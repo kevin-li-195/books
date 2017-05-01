@@ -17,38 +17,69 @@
   <body>
     <div class="mdl-layout mdl-js-layout mdl-layout--fixed-header">
       <header class="mdl-layout__header mdl-layout__header--scroll">
-        <div class="mdl-layout-icon"></div>
+        <div class="mdl-layout-icon">
+          <i class='material-icons'>book</i>
+        </div>
         <div class="mdl-layout__header-row">
-          <span class="mdl-layout__title">Hello world!</span>
+          <span class="mdl-layout__title">McGill Library Renewal</span>
           <div class="mdl-layout-spacer"></div>
         </div>
       </header>
 
       <main id="main" class="mdl-layout__content">
         <div class="page-content">
-          <div>
-            <div>
-              <div class="mdl-textfield mdl-js-textfield">
-                <input class="mdl-textfield__input" id="username-input" type="text" name="username">
-                <label class="mdl-textfield__label" for="username-input"> McGill username </label>
-              </div>
+          <h2 class='mdl-typography--display-2 mdl-typography--font-thin'>
+            Don't let your books get away.
+          </h2>
 
-              <!--
-            </div>
+          <p>
+          The McGill Library Renewal service automatically renews your books every day.
+          That way, when someone else requests your book, you get to keep it for as long as possible.
+          And it only costs <em>one dollar for a semester</em> of daily renewals.
+          </p>
 
-            <div>
-              -->
-              <div class="mdl-textfield mdl-js-textfield">
-                <input class="mdl-textfield__input" id="password-input" type="password" name="password">
-                <label class="mdl-textfield__label" for="password-input"> McGill password </label>
-              </div>
-            </div>
-
+          <div class='mdl-typography--text-center'>
             <button
-              id='submit'
-              class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent">
-              Buy now
+              id='signup-button'
+              class="mdl-button mdl-js-button mdl-js-ripple-effect mdl-button--raised mdl-button--accent">
+              Sign up
             </button>
+          </div>
+
+          <div id='signup-card' class='payment-form mdl-card mdl-shadow--2dp'>
+            <div class='mdl-card__title'>
+              <h2 class='mdl-card__title-text'>Sign me up</h2>
+            </div>
+
+            <div class='mdl-card__supporting-text'>
+              <div>
+                <div class="mdl-textfield mdl-js-textfield">
+                  <input class="mdl-textfield__input" id="username-input" type="text" name="username">
+                  <label class="mdl-textfield__label" for="username-input"> McGill email </label>
+                </div>
+              </div>
+
+              <div>
+                <div class="mdl-textfield mdl-js-textfield">
+                  <input class="mdl-textfield__input" id="password-input" type="password" name="password">
+                  <label class="mdl-textfield__label" for="password-input"> McGill password </label>
+                </div>
+              </div>
+            </div>
+
+            <div class='mdl-card__actions mdl-card--border'>
+              <button
+                id='submit'
+                class="mdl-button mdl-js-button mdl-js-ripple-effect mdl-button--colored">
+                Buy now
+              </button>
+            </div>
+
+            <div class='mdl-card__menu'>
+              <button class='mdl-button mdl-button--icon mdl-js-button mdl-js-ripple-effect'>
+                <i class='material-icons'>info</i>
+              </button>
+            </div>
           </div>
         </div>
       </main>
@@ -56,4 +87,5 @@
   </body>
 </html>
 
-<!-- vim: set shiftwidth=2 textwidth=120 -->
+<!-- vim: shiftwidth=2 textwidth=120
+-->

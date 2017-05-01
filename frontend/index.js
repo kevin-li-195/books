@@ -24,6 +24,13 @@
     window.addEventListener('popstate', function() {
       handler.close();
     });
+
+    $('#signup-button').click(function() {
+        $('#signup-button').hide();
+        console.log('hi');
+        $('#signup-card').fadeIn(400, function() {console.log('done');});
+    });
   });
 })();
-//hello
+
+// vim: shiftwidth=2 tw=79

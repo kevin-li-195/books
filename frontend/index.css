@@ -1,6 +1,25 @@
 body {
-  height: 2000px;
+
 }
 
-/* vim: setlocal shiftwidth=2
+div.page-content {
+  background-image: url('/bg.jpg');
+  max-width: 8.5in;
+  margin: auto;
+}
+
+div.payment-form {
+  /* text-align: center; */
+  margin: auto;
+}
+
+#signup-button {
+  text-align: center;
+}
+
+#signup-card {
+  display: none;
+}
+
+/* vim: shiftwidth=2 tw=79
  */
