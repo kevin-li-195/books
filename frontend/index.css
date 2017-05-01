@@ -19,6 +19,16 @@ div.payment-form {
 
 #signup-card {
   display: none;
+  min-width: 80%;
+}
+
+#username-and-password-input {
+  text-align: center;
+}
+
+#progress {
+  display: none;
+  width: 100%;
 }
 
 /* vim: shiftwidth=2 tw=79

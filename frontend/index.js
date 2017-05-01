@@ -30,6 +30,20 @@
         console.log('hi');
         $('#signup-card').fadeIn(400, function() {console.log('done');});
     });
+
+    $('#see-my-books').click(function() {
+      // * make username-and-password-input disappear
+      // * replace it with a spinner
+      // * perform ajax to register the user with the current username and
+      //   password
+      // * if the response comes back ok, then we get a list of books, so we
+      //   create a table showing the user that information
+      // * if the response comes back in error, then show the text input fields
+      //   again and display "username/password" incorrect
+
+      $('#username-and-password-input input').prop('disabled', true);
+      $('#progress').show();
+    });
   });
 })();
 
