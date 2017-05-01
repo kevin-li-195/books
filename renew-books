@@ -1,0 +1,65 @@
+#!/usr/bin/env python
+
+import urllib
+import requests
+from sys import exit
+
+from bs4 import BeautifulSoup
+
+BASE = "https://catalogue.mcgill.ca/F/?func=login-session"
+
+s = requests.Session()
+
+r = s.get(BASE)
+
+soup = BeautifulSoup(r.text, "html.parser")
+
+POST_LINK = soup.find("form", class_="loginsession").attrs["action"]
+
+with open("/home/chokboy/scripts/mcgill-lib-secret.txt", "r") as f:
+    lines = f.read().splitlines()
+
+USER = lines[0]
+PASS = lines[1]
+
+payload = {
+        "ssl_flag":"Y",
+        "func":"login-session",
+        "bor_library":"MGU50",
+        "login_source":"",
+        "folder":"",
+        "req_type":"",
+        "bor_id":USER,
+        "bor_verification":PASS,
+        "func=login":"Sign in"
+        }
+
+header = {
+        "Referer" : "https://catalogue.mcgill.ca/F/?func=login-session"
+        }
+
+r = s.post(POST_LINK, data=payload, headers=header)
+loan_page = s.get(POST_LINK + "?func=bor-loan")
+loan_soup = BeautifulSoup(loan_page.text, "html.parser")
+RENEW_LINK = loan_soup.find("span", class_ = "buttons").find("a", title = "Renew All").attrs["href"].split("javascript:replacePage('")[1][:-3]
+
+resp = BeautifulSoup(s.get(RENEW_LINK).text, "html.parser")
+
+tab = resp.findAll("table")
+
+if tab is None:
+    print("Fail.")
+    exit(1)
+
+rows = tab[0].findAll("tr")[1:]
+
+if len(rows) == 0:
+    print("Fail.")
+    exit(1)
+
+for row in rows:
+    cells = row.findAll("td")
+    print("Tried to renew: %s." % cells[1].text)
+
+for t in tab:
+    print(t)
