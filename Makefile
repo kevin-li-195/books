@@ -1,12 +1,10 @@
 .PHONY: frontend-deploy frontend
 
-$(shell mkdir -p deploy)
-
 DEPLOYDIR=/srv/http/renewal
 
 frontend-deploy: frontend
-	rsync -r --delete deploy/ $(DEPLOYDIR)
+	rsync --delete deploy/ $(DEPLOYDIR)
 
 frontend:
-	-rm -r deploy/*
-	cp frontend/index.html frontend/index.js deploy
+	rm -r deploy/*
+	cp frontend/* deploy
