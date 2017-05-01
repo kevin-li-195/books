@@ -17,7 +17,7 @@ CREATE TABLE profile (
     created_at TIMESTAMP NOT NULL DEFAULT ( now() ),
 
     UNIQUE ( username ),
-    UNIQUE ( email ),
+    UNIQUE ( email_address ),
     UNIQUE ( phone_number )
 );
 
@@ -29,7 +29,9 @@ CREATE TABLE renewal (
     profile_id INTEGER NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT ( now() ),
 
-    FOREIGN KEY profile_id REFERENCES profile ( id )
+    CONSTRAINT fk_profile_id__profile_id
+    FOREIGN KEY ( profile_id )
+    REFERENCES profile ( id )
 );
 
 CREATE TABLE renewal_item (
