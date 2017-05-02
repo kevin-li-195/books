@@ -62,6 +62,17 @@ data Config
   , dbconn :: Connection
   }
 
+-- | Connects to the DB with the given connection string and uses the given
+-- Text as the stripe key.
+newConfig :: BS.ByteString -> T.Text -> IO Config
+newConfig connstr key = do
+  conn <- connectPostgreSQL connstr
+  pure Config
+    { dbconn = conn
+    , stripeKey = key
+    , StripeConfig key
+    }
+
 data RenewalResults
   = RenewalResults
   { renewalDescription :: T.Text
