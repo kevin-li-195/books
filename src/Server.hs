@@ -199,7 +199,7 @@ retrievePassQuery :: Query
 retrievePassQuery = "select password from profile where username = ?"
 
 insertRenewalQuery :: Query
-insertRenewalQuery = "insert into renewal (profile_id) values (select id from profile where username = ?) returning id"
+insertRenewalQuery = "insert into renewal (profile_id) (select id from profile where username = ?) returning id"
 
 insertRenewalItemsQuery :: Query
 insertRenewalItemsQuery = "insert into renewal_item (renewal_id, description, item_status, due_date, renewal_status, comment) values (?, ?, ?, ?, ?, ?)"
