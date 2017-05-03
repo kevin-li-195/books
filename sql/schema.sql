@@ -60,12 +60,19 @@ CREATE TABLE renewal_item (
     renewal_id INTEGER NOT NULL,
     description TEXT NOT NULL,
     item_status TEXT NOT NULL,
+    -- TODO: Combine due date and due hour
     due_date TIMESTAMP NOT NULL,
     -- represents whether the renewal for this item succeeded or not.
     -- 0: renewal succeeded
     -- 1: renewal failed
+    -- TODO: Parse comment for success/failure
     renewal_status INTEGER NOT NULL,
+    -- TODO: Add library, barcode, itemdesc info
     comment TEXT NOT NULL
+
+    CONTRAINT fk_renewal_id__renewal_id
+    FOREIGN KEY ( renewal_id )
+    REFERENCES renewal ( id )
 );
 
 COMMIT;
