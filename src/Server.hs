@@ -150,7 +150,7 @@ register Config{..} Registrant{..} = do
   case exitcode of
     ExitSuccess -> case runParser detailedBooks "lookup" stdout of
             Right a -> pure $ DetailedProfile a
-            Left b -> fail $ "Parser error: " ++ (show b)
+            Left b -> fail $ "Parser error: " ++ (show b) ++ "Dumping stdout: " ++ stdout ++ "Dumping stderr: " ++ stderr
     ExitFailure _ -> fail $ "Detailed book scrape failure: "
                 ++ stdout
                 ++ stderr
@@ -212,7 +212,7 @@ renew Config{..} u = do
   case exitcode of
     ExitSuccess -> case runParser renewalResultsParser "renewal" stdout of
       Right a -> pure a
-      Left b -> fail $ "Parser error: " ++ (show b)
+      Left b -> fail $ "Parser error: " ++ (show b) ++ "Dumping stdout: " ++ stdout ++ "Dumping stderr: " ++ stderr
     ExitFailure _ -> fail $ "Renewal failure occurred. \
       \Dumping stdout and stderr: "
       ++ stdout
