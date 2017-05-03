@@ -8,6 +8,7 @@
 module Server.Types where
 
 import Data.Aeson
+import qualified Data.ByteString as BS
 import Database.PostgreSQL.Simple
 
 import Data.Time.Clock
@@ -37,7 +38,13 @@ data PaymentInfo
 
 -- | New type wrapper for usernames.
 newtype Username = Username { unUsername :: T.Text }
-  deriving (FromJSON, ToJSON, Generic)
+
+instance FromJSON Username where
+  parseJSON (String s) = pure (Username s)
+  parseJSON _ = fail "cannot parse username from non-string"
+
+instance ToJSON Username where
+  toJSON (Username s) = String s
 
 -- | Data provided by the registrant.
 data Registrant
@@ -53,24 +60,23 @@ data Registrant
   , trigger :: Trigger
   -- ^ Trigger for notifications
   }
+  deriving (FromJSON, ToJSON, Generic)
 
 -- | Server config.
 data Config
   = Config
   { stripeConfig :: StripeConfig
-  , stripeKey :: T.Text
   , dbconn :: Connection
   }
 
 -- | Connects to the DB with the given connection string and uses the given
--- Text as the stripe key.
-newConfig :: BS.ByteString -> T.Text -> IO Config
+-- bytestring as the stripe key.
+newConfig :: BS.ByteString -> BS.ByteString -> IO Config
 newConfig connstr key = do
   conn <- connectPostgreSQL connstr
   pure Config
     { dbconn = conn
-    , stripeKey = key
-    , StripeConfig key
+    , stripeConfig = StripeConfig (StripeKey key)
     }
 
 data RenewalResults
@@ -155,6 +161,7 @@ data DetailedProfile
   = DetailedProfile
   { detailedBookList :: [DetailedBook]
   }
+  deriving (FromJSON, ToJSON, Generic)
 
 -- | Detailed book data from just examining loan status.
 data DetailedBook
@@ -169,3 +176,4 @@ data DetailedBook
   , accruingFine :: T.Text
   , numberOfRenewals :: T.Text
   }
+  deriving (FromJSON, ToJSON, Generic)

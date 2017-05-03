@@ -2,6 +2,7 @@ module Main where
 
 import qualified Data.ByteString as BS
 import qualified Data.Text as T
+import qualified Data.Text.Encoding as T
 import Network.Wai.Handler.Warp ( run )
 import Network.Wai ( Application )
 import Network.Wai.Middleware.RequestLogger ( logStdoutDev )
@@ -13,8 +14,8 @@ import Server.Types
 
 main :: IO ()
 main = do
-  connstr <- BS.pack <$> getEnv "BOOKS_PSQL"
-  key <- T.pack <$> getEnv "BOOKS_STRIPE_KEY_SECRET"
+  connstr <- T.encodeUtf8 . T.pack <$> getEnv "BOOKS_PSQL"
+  key <- T.encodeUtf8 . T.pack <$> getEnv "BOOKS_STRIPE_KEY_SECRET"
   config <- newConfig connstr key
   run 8084 (logStdoutDev (app config))
 
