@@ -1,11 +1,11 @@
 [Unit]
 Description=Books Renewal Webservice
 Wants=nginx.service
-WorkingDirectory=/home/renewal/books
 
 [Service]
 ExecStart=/home/renewal/books/bin/books
 EnvironmentFile=/home/renewal/books/.secrets
+WorkingDirectory=/home/renewal/books
 
 [Install]
 WantedBy=default.target
