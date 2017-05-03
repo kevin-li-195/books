@@ -5,7 +5,7 @@ DEPLOYDIR=/srv/http/renewal
 deploy: frontend-deploy backend-deploy
 
 frontend-deploy: frontend
-	rsync --delete deploy/ $(DEPLOYDIR)
+	rsync -r --delete deploy/ $(DEPLOYDIR)
 
 frontend:
 	rm -r deploy/*
