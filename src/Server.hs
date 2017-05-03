@@ -58,10 +58,11 @@ detailedBooks = "detailedBooks" `dbg` (header *> sc *> (dbg "detailedBooksDbg" (
 
 -- | Parser for list of renewal results
 renewalResultsParser :: Parser [RenewalResult]
-renewalResultsParser = "renewalResultsParser" `dbg` (header *> sc *> (renewalResult `manyTill` eof))
+renewalResultsParser 
+  = dbg "renewalResultsParser" $ header *> sc *> renewalResult `manyTill` eof
 
 renewalResult :: Parser RenewalResult
-renewalResult = dbg "renewalResult" $ do
+renewalResult = dbg "renewalResult" $ between tr tr $ do
   tdCell
   RenewalResult
     <$> tdCell
