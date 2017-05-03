@@ -105,7 +105,7 @@
         },
         function(errors) {
           console.log('errors ' + JSON.stringify(errors));
-        },
+        }
       );
     });
 
