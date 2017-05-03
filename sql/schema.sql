@@ -70,7 +70,7 @@ CREATE TABLE renewal_item (
     -- TODO: Add library, barcode, itemdesc info
     comment TEXT NOT NULL
 
-    CONTRAINT fk_renewal_id__renewal_id
+    CONSTRAINT fk_renewal_id__renewal_id
     FOREIGN KEY ( renewal_id )
     REFERENCES renewal ( id )
 );
