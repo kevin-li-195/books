@@ -3,12 +3,40 @@
   var handler = null;
 
   $(document).ready(function() {
+    var progress = $('#progress');
+
+    function showProgress() {
+      progress.css('visibility', 'visible');
+    }
+
+    function hideProgress() {
+      progress.css('visibility', 'hidden');
+    }
+
     handler = StripeCheckout.configure({
       key: 'pk_test_AEzcSG6wdn2OKEGPmMVZSWcK',
       image: 'https://stripe.com/img/documentation/checkout/marketplace.png',
       locale: 'auto', // TODO change to en_CA
       token: function(token) {
-        // TODO sending token server-side happens here
+        showProgress();
+
+        postPayment(
+          {
+            tokenId: token.id,
+            paymentUsername: $('#username-input').val(),
+          },
+          function() {
+            hideProgress();
+            alert('yay');
+          },
+          function() {
+            hideProgress();
+            clearValidationErrors();
+            $(validationErrorsNode).append(
+              '<li> An error occurred processing your payment. Don\'t worry, nothing has been charged to your card! </li>',
+            );
+          }
+        );
       },
     });
 
@@ -88,7 +116,7 @@
 
       $('#username-and-password-input input').prop('disabled', true);
       console.log('inputs are disabled');
-      $('#progress').css('visibility', 'visible');
+      showProgress();
 
       postRegister(
         {
@@ -101,7 +129,7 @@
         function(profile) {
           console.log('it worked');
           console.log(JSON.stringify(profile));
-          $('#progress').css('visibility', 'hidden');
+          hideProgress();
           constructTable(profile.detailedBookList);
         },
         function(errors) {
@@ -109,7 +137,7 @@
           $(validationErrorsNode).append(
             $("<li> An error occurred while fetching your books. </li>")
           );
-          $('#progress').css('visibility', 'hidden');
+          hideProgress();
           console.log('errors ' + JSON.stringify(errors));
         }
       );
@@ -130,7 +158,7 @@
         tr.append($('<td></td>').text(book.accruingFine));
         tr.append($('<td></td>').text(book.dueDate + ' ' + book.dueHour));
         tr.append($('<td></td>').text(book.year));
-        tr.append($('<td></td>').text(book.renewals));
+        tr.append($('<td></td>').text(book.numberOfRenewals));
         table.append(tr);
       });
       table.show();
