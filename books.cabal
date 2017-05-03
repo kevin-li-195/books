@@ -37,5 +37,8 @@ executable books
     wai-extra >=3.0 && <3.1,
     warp >=3.2 && <3.3
 
+  ghc-options:
+    -Wall
+
   hs-source-dirs:      src
   default-language:    Haskell2010
