@@ -33,7 +33,7 @@
             hideProgress();
             clearValidationErrors();
             $(validationErrorsNode).append(
-              '<li> An error occurred processing your payment. Don\'t worry, nothing has been charged to your card! </li>',
+              '<li> An error occurred processing your payment. Don\'t worry, nothing has been charged to your card! </li>'
             );
           }
         );
