@@ -182,14 +182,14 @@ validateAccount Config{..} u
   = execute dbconn validationQuery (Only $ unUsername u) >> pure ()
 
 getRenewalProfileQuery :: Query
-getRenewalProfileQuery = "select (i.description, i.item_status, i.due_date, r.created_at) from profile p inner join renewal r on (r.profile_id = p.id) inner join renewal_item i on (i.renewal_id = r.id) where p.username = ? and r.created_at = max(r.created_at)"
+getRenewalProfileQuery = "select (i.description, i.item_status, i.due_date, r.created_at) from profile p inner join renewal r on (r.profile_id = p.id) inner join renewal_item i on (i.renewal_id = r.id) where p.username = ? and r.created_at = (select max(created_at) from renewal r inner join profile p on (p.id = r.profile_id) where p.username = ?)"
 
 -- | Return the current 'RenewalProfile' of the given 'Username'
 -- based on the current database status.
 getRenewalProfile :: Config -> Username -> IO RenewalProfile
-getRenewalProfile Config{..} user = do
+getRenewalProfile Config{..} u = do
   rows :: [(T.Text, T.Text, UTCTime, UTCTime)] <-
-    query dbconn getRenewalProfileQuery (Only $ unUsername user)
+    query dbconn getRenewalProfileQuery (unUsername u, unUsername u)
   pure $ RenewalProfile $
           ( \(desc, stat, due, last) -> DBBook desc stat due last )
           <$> rows
