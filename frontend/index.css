@@ -36,7 +36,7 @@ div.payment-form {
   text-align: left;
 }
 
-#table {
+#table table, #table td, #table th {
   display: none;
 
   border-collapse: collapse;
