@@ -36,9 +36,9 @@ libraryScraper :: String
 libraryScraper = "library-scraper"
 
 renewalServer :: Config -> Server RenewalApi
-renewalServer cfg
-  = register cfg
-  :<|> pay cfg
+renewalServer cfg = register cfg :<|> pay cfg :<|> echo where
+  echo :: B.ByteString -> Handler B.ByteString
+  echo = pure
 
 registerSQLInsertQuery :: Query
 registerSQLInsertQuery = "insert into profile (username, password, email_address, phone_number) values (?, ?, ?, ?)"

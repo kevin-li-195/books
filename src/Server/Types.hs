@@ -28,6 +28,9 @@ type RenewalApi
   :<|> "payment"
     :> ReqBody '[JSON] PaymentInfo
     :> Post '[JSON] RenewalProfile
+  :<|> "echo"
+    :> ReqBody '[OctetStream] BS.ByteString
+    :> Post '[OctetStream] BS.ByteString
 
 data PaymentInfo
   = PaymentInfo
