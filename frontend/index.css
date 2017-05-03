@@ -40,7 +40,9 @@ div.payment-form {
   display: none;
 }
 
-#table table, #table td, #table th {
+
+
+table#table, #table td, #table th {
   border-collapse: collapse;
   border: 1px solid #555;
   margin: 1em 0;
