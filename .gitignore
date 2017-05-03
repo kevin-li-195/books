@@ -5,3 +5,5 @@
 /deploy/
 /cabal.sandbox.config
 /.secrets
+cabal.sandbox.config
+books.secrets

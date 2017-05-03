@@ -17,6 +17,8 @@ import Control.Monad.Trans
 import qualified Data.ByteString as B
 import qualified Data.Text as T
 
+import Data.Time.Clock
+
 import Database.PostgreSQL.Simple
 import Web.Stripe.Charge
 import Web.Stripe
@@ -50,9 +52,26 @@ selectUserPassQuery :: Query
 selectUserPassQuery = "select password from profile where username = ?"
 
 -- | Parser for detailedBooks
--- given
+-- given stdout output.
 detailedBooks :: Parser [DetailedBook]
 detailedBooks = header *> many detailedBook
+
+-- | Parser for list of renewal results
+renewalResultsParser :: Parser [RenewalResult]
+renewalResultsParser = header *> many renewalResult
+
+renewalResult :: Parser RenewalResult
+renewalResult = do
+  tdCell
+  RenewalResult
+    <$> tdCell
+    <*> tdCell
+    <*> tdCell
+    <*> tdCell
+    <*> tdCell
+    <*> tdCell
+    <*> tdCell
+    <*> tdCell
 
 -- | Space consuming parser.
 sc :: Parser ()
@@ -74,9 +93,12 @@ th = try (string "<th>") <|> (string "</th>")
 text :: Parser String
 text = many anyChar
 
+thCell :: Parser String
+thCell = between th th text
+
 -- | Content in the header.
 headerElems :: Parser [String]
-headerElems = sepBy1 text (some th)
+headerElems = many thCell
 
 -- | The entire header
 header :: Parser [String]
@@ -87,8 +109,8 @@ detailedBook :: Parser DetailedBook
 detailedBook = between tr tr dataRow
 
 -- | Data cell
-tdCell :: Parser String
-tdCell = between td td text
+tdCell :: Parser T.Text
+tdCell = T.pack <$> between td td text
 
 -- | The data contents of a single table row.
 -- Table row has length 11, but
@@ -98,16 +120,16 @@ dataRow :: Parser DetailedBook
 dataRow = do
   tdCell
   tdCell
-  DetailedBook
-    <$> (T.pack <$> tdCell)
-    <*> (T.pack <$> tdCell)
-    <*> (T.pack <$> tdCell)
-    <*> (T.pack <$> tdCell)
-    <*> (T.pack <$> tdCell)
-    <*> (T.pack <$> tdCell)
-    <*> (T.pack <$> tdCell)
-    <*> (T.pack <$> tdCell)
-    <*> (T.pack <$> tdCell)
+  DetailedBook 
+    <$> tdCell
+    <*> tdCell
+    <*> tdCell
+    <*> tdCell
+    <*> tdCell
+    <*> tdCell
+    <*> tdCell
+    <*> tdCell
+    <*> tdCell
 
 -- | Register the 'Registrant' in the database,
 -- and return the freshly generated detailed profile.
@@ -135,30 +157,63 @@ register Config{..} Registrant{..} = do
 
 -- | Base 1 CAD payment.
 pmt :: StripeRequest CreateCharge
-pmt = createCharge (Amount 1) CAD
-
+pmt = createCharge (Amount 100) CAD
+  
 pay :: Config -> PaymentInfo -> Handler RenewalProfile
-pay Config{..} PaymentInfo{..} = do
+pay conf@Config{..} PaymentInfo{..} = do
   result <- liftIO $ stripe stripeConfig $ pmt -&- tokenId
   case result of
     Right details
       -> if chargePaid details
          then liftIO $ do
-            validateAccount paymentUsername
-            renew paymentUsername
-            getRenewalProfile paymentUsername
+            validateAccount conf paymentUsername
+            renew conf paymentUsername
+            getRenewalProfile conf paymentUsername
          else fail $ "Charge was not paid." ++ (show details)
     Left err -> fail $ show err
 
+validationQuery :: Query
+validationQuery = "update profile set (paid, time_paid) = (true, now()) where username = ?"
+
 -- | Validates the given 'Username' to mark it as paid.
-validateAccount u = error "unimplemented validateAccount"
+validateAccount :: Config -> Username -> IO ()
+validateAccount Config{..} u 
+  = execute dbconn validationQuery (Only $ unUsername u) >> pure ()
+
+getRenewalProfileQuery :: Query
+getRenewalProfileQuery = "select (i.description, i.item_status, i.due_date, r.created_at) from profile p inner join renewal r on (r.profile_id = p.id) inner join renewal_item i on (i.renewal_id = r.id) where p.username = ? and r.created_at = max(r.created_at)"
 
 -- | Return the current 'RenewalProfile' of the given 'Username'
 -- based on the current database status.
-getRenewalProfile :: Username -> IO RenewalProfile
-getRenewalProfile user = error "unimplemented getRenewalProfile"
+getRenewalProfile :: Config -> Username -> IO RenewalProfile
+getRenewalProfile Config{..} user = do
+  rows :: [(T.Text, T.Text, UTCTime, UTCTime)] <-
+    query dbconn getRenewalProfileQuery (Only $ unUsername user)
+  pure $ RenewalProfile $
+          ( \(desc, stat, due, last) -> DBBook desc stat due last )
+          <$> rows
+
+retrievePassQuery :: Query
+retrievePassQuery = "select password from profile where username = ?"
 
 -- | Try to renew all books of given 'Username' and
 -- return results.
-renew :: Username -> IO RenewalResults
-renew user = error "unimplemented renew"
+renew :: Config -> Username -> IO [RenewalResult]
+renew Config{..} u = do
+  [Only pass] <- query dbconn retrievePassQuery (Only $ unUsername u)
+  (exitcode, stdout, stderr) <- liftIO $ 
+            readProcessWithExitCode 
+                libraryScraper
+                [ "renew"
+                , T.unpack $ unUsername u
+                , T.unpack pass
+                ] 
+                ""
+  case exitcode of
+    ExitSuccess -> case runParser renewalResultsParser "" stdout of
+      Right a -> pure a
+      Left b -> fail $ "Parser error: " ++ (show b)
+    ExitFailure _ -> fail $ "Renewal failure occurred. \
+      \Dumping stdout and stderr: "
+      ++ stdout
+      ++ stderr

@@ -82,17 +82,20 @@ newConfig connstr key = do
     , stripeConfig = StripeConfig (StripeKey key)
     }
 
-data RenewalResults
-  = RenewalResults
+-- | Single row in renewal output.
+data RenewalResult
+  = RenewalResult
   { renewalDescription :: T.Text
   , renewalItemStatus :: T.Text
-  , renewalDueDate :: UTCTime
-  , renewalRenewalStatus :: Int
+  , renewalDueDate :: T.Text
+  , renewalDueHour :: T.Text
+  , renewalLibrary :: T.Text
+  , renewalBarcode :: T.Text
+  , renewalItemDesc :: T.Text
   , renewalComment :: T.Text
   -- ^ Reason for non-renewal if
-  -- renewalStatus == 1.
-  -- Otherwise is comment if
-  -- renewalStatus == 0.
+  -- renewal failed.
+  -- Otherwise is comment.
   }
 
 -- | Events that trigger notifications.
