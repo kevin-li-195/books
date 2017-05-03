@@ -54,11 +54,11 @@ selectUserPassQuery = "select password from profile where username = ?"
 -- | Parser for detailedBooks
 -- given stdout output.
 detailedBooks :: Parser [DetailedBook]
-detailedBooks = header *> sc *> many detailedBook
+detailedBooks = header *> sc *> detailedBook `manyTill` eof
 
 -- | Parser for list of renewal results
 renewalResultsParser :: Parser [RenewalResult]
-renewalResultsParser = header *> sc *> many renewalResult
+renewalResultsParser = header *> sc *> renewalResult `manyTill` eof
 
 renewalResult :: Parser RenewalResult
 renewalResult = do
