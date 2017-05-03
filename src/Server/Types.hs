@@ -97,6 +97,7 @@ data RenewalResult
   -- renewal failed.
   -- Otherwise is comment.
   }
+  deriving Show
 
 -- | Events that trigger notifications.
 data Trigger
@@ -183,4 +184,4 @@ data DetailedBook
   , accruingFine :: T.Text
   , numberOfRenewals :: T.Text
   }
-  deriving (FromJSON, ToJSON, Generic)
+  deriving (FromJSON, ToJSON, Generic, Show)
