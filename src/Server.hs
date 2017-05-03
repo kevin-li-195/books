@@ -50,7 +50,7 @@ selectUserPassQuery :: Query
 selectUserPassQuery = "select password from profile where username = ?"
 
 -- | Parser for detailedBooks
--- given 
+-- given
 detailedBooks :: Parser [DetailedBook]
 detailedBooks = header *> many detailedBook
 
@@ -98,7 +98,7 @@ dataRow :: Parser DetailedBook
 dataRow = do
   tdCell
   tdCell
-  DetailedBook 
+  DetailedBook
     <$> (T.pack <$> tdCell)
     <*> (T.pack <$> tdCell)
     <*> (T.pack <$> tdCell)
@@ -114,34 +114,34 @@ dataRow = do
 -- from immediately scraping the library webpage.
 register :: Config -> Registrant -> Handler DetailedProfile
 register Config{..} Registrant{..} = do
-  id <- liftIO $ execute dbconn registerSQLInsertQuery 
+  id <- liftIO $ execute dbconn registerSQLInsertQuery
             (unUsername registrantUsername, pass, notificationEmail, phoneNumber)
   liftIO $ execute dbconn notificationSettingInsertQuery (id, triggerToInt trigger)
-  (exitcode, stdout, stderr) <- liftIO $ 
-            readProcessWithExitCode 
+  (exitcode, stdout, stderr) <- liftIO $
+            readProcessWithExitCode
                 libraryScraper
                 [ "lookup"
                 , T.unpack $ unUsername registrantUsername
                 , T.unpack pass
-                ] 
+                ]
                 ""
   case exitcode of
     ExitSuccess -> case runParser detailedBooks "" stdout of
             Right a -> pure $ DetailedProfile a
             Left b -> fail $ "Parser error: " ++ (show b)
-    ExitFailure _ -> fail $ "Detailed book scrape failure: " 
-                ++ stdout 
+    ExitFailure _ -> fail $ "Detailed book scrape failure: "
+                ++ stdout
                 ++ stderr
 
 -- | Base 1 CAD payment.
 pmt :: StripeRequest CreateCharge
 pmt = createCharge (Amount 1) CAD
-  
+
 pay :: Config -> PaymentInfo -> Handler RenewalProfile
 pay Config{..} PaymentInfo{..} = do
   result <- liftIO $ stripe stripeConfig $ pmt -&- tokenId
   case result of
-    Right details 
+    Right details
       -> if chargePaid details
          then liftIO $ do
             validateAccount paymentUsername
