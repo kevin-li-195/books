@@ -66,13 +66,13 @@
       clearValidationErrors();
       var hasErrors = false;
       if(!validateUsername()) {
-        validationErrorsNode.append(
+        $(validationErrorsNode).append(
           $("<li> Please provide a valid McGill email address. </li>")
         );
         hasErrors = true;
       }
       if(!validatePassword()) {
-        validationErrorsNode.append(
+        $(validationErrorsNode).append(
           $("<li> Please provide the password. </li>")
         );
         hasErrors = true;
