@@ -134,7 +134,8 @@ instance ToJSON Trigger where
     Never -> "never"
 
 instance FromJSON TokenId where
-  parseJSON (Object o) = TokenId <$> o .: "stripeToken"
+  parseJSON (String s) = pure $ TokenId s
+  parseJSON _ = error "Expected string JSON value given."
 
 -- | Returned to the registrant upon first renewal.
 -- Represents the current state of the registrant's
