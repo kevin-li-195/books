@@ -25,3 +25,6 @@ backend:
 
 clean:
 	cabal clean
+
+schema:
+	psql -f sql/schema.sql
