@@ -120,7 +120,7 @@ dataRow :: Parser DetailedBook
 dataRow = do
   tdCell
   tdCell
-  DetailedBook 
+  DetailedBook
     <$> tdCell
     <*> tdCell
     <*> tdCell
@@ -158,7 +158,7 @@ register Config{..} Registrant{..} = do
 -- | Base 1 CAD payment.
 pmt :: StripeRequest CreateCharge
 pmt = createCharge (Amount 100) CAD
-  
+
 pay :: Config -> PaymentInfo -> Handler RenewalProfile
 pay conf@Config{..} PaymentInfo{..} = do
   result <- liftIO $ stripe stripeConfig $ pmt -&- tokenId
@@ -177,7 +177,7 @@ validationQuery = "update profile set (paid, time_paid) = (true, now()) where us
 
 -- | Validates the given 'Username' to mark it as paid.
 validateAccount :: Config -> Username -> IO ()
-validateAccount Config{..} u 
+validateAccount Config{..} u
   = execute dbconn validationQuery (Only $ unUsername u) >> pure ()
 
 getRenewalProfileQuery :: Query
@@ -201,13 +201,13 @@ retrievePassQuery = "select password from profile where username = ?"
 renew :: Config -> Username -> IO [RenewalResult]
 renew Config{..} u = do
   [Only pass] <- query dbconn retrievePassQuery (Only $ unUsername u)
-  (exitcode, stdout, stderr) <- liftIO $ 
-            readProcessWithExitCode 
+  (exitcode, stdout, stderr) <- liftIO $
+            readProcessWithExitCode
                 libraryScraper
                 [ "renew"
                 , T.unpack $ unUsername u
                 , T.unpack pass
-                ] 
+                ]
                 ""
   case exitcode of
     ExitSuccess -> case runParser renewalResultsParser "" stdout of
