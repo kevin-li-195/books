@@ -29,6 +29,7 @@ import Servant.API
 import Server.Types
 
 import System.Process
+import System.IO
 import System.Exit
 
 import Text.Megaparsec
@@ -163,6 +164,7 @@ pmt = createCharge (Amount 100) CAD
 
 pay :: Config -> PaymentInfo -> Handler RenewalProfile
 pay conf@Config{..} PaymentInfo{..} = do
+  liftIO $ hPrint stderr "Hello there."
   result <- liftIO $ stripe stripeConfig $ pmt -&- tokenId
   case result of
     Right details
