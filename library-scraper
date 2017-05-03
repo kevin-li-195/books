@@ -81,6 +81,9 @@ def renew():
 
     t = tab[0]
 
+    # Clean table
+    t = clean_soup(t)
+
     for tr in t.findAll("tr"):
         print(tr)
 
@@ -95,8 +98,15 @@ def lookup():
         exit(1)
     # Print each row
     table = tables[0]
+    # Clean soup
+    table = clean_soup(table)
     for tr in table.findAll("tr"):
         print(tr)
+
+def clean_soup(soup):
+    for tag in soup.findAll(True): 
+        tag.attrs = None
+    return soup
 
 def main():
     # Now logged in in Session s.
