@@ -18,5 +18,6 @@ backend-deploy: backend
 
 backend:
 	cabal clean
+	cabal update
 	cabal install --only-dependencies
 	cabal build
