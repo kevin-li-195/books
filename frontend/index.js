@@ -46,10 +46,9 @@
     }
 
     var validationErrorsNode = document.getElementById('validation-errors');
-    console.log(validationErrorsNode);
 
     function clearValidationErrors() {
-      while(validationErrorsNode.hasChildren()) {
+      while(validationErrorsNode.hasChildNodes()) {
         validationErrorsNode.removeChild(validationErrorsNode.lastChild);
       }
     }
