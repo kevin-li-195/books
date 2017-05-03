@@ -36,9 +36,11 @@ div.payment-form {
   text-align: left;
 }
 
-#table table, #table td, #table th {
+#table {
   display: none;
+}
 
+#table table, #table td, #table th {
   border-collapse: collapse;
   border: 1px solid #555;
   margin: 1em 0;
