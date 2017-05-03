@@ -35,7 +35,7 @@ import Text.Megaparsec.Char
 import Text.Megaparsec.String
 
 libraryScraper :: String
-libraryScraper = "library-scraper"
+libraryScraper = "./library-scraper"
 
 renewalServer :: Config -> Server RenewalApi
 renewalServer cfg = register cfg :<|> pay cfg :<|> echo where
