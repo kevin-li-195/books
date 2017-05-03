@@ -50,6 +50,7 @@
     function clearValidationErrors() {
       while(validationErrorsNode.hasChildNodes()) {
         validationErrorsNode.removeChild(validationErrorsNode.lastChild);
+        console.log('Removed error.');
       }
     }
 
@@ -70,12 +71,14 @@
           $("<li> Please provide a valid McGill email address. </li>")
         );
         hasErrors = true;
+        console.log('added username error');
       }
       if(!validatePassword()) {
         $(validationErrorsNode).append(
           $("<li> Please provide the password. </li>")
         );
         hasErrors = true;
+        console.log('added password error');
       }
       if(hasErrors) return;
 
