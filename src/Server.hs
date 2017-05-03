@@ -12,12 +12,14 @@
 
 module Server where
 
+import Control.Monad
 import Control.Monad.Trans
 
 import qualified Data.ByteString as B
 import qualified Data.Text as T
 
 import Data.Time.Clock
+import Data.Time.LocalTime
 import Data.Time.Format
 
 import Database.PostgreSQL.Simple
@@ -196,11 +198,14 @@ getRenewalProfileQuery = "select i.description, i.item_status, i.due_date, r.cre
 -- based on the current database status.
 getRenewalProfile :: Config -> Username -> IO RenewalProfile
 getRenewalProfile Config{..} u = do
-  rows :: [(T.Text, T.Text, UTCTime, UTCTime)] <-
+  rows :: [(T.Text, T.Text, LocalTime, LocalTime)] <-
     query dbconn getRenewalProfileQuery (unUsername u, unUsername u)
   pure $ RenewalProfile $
           ( \(desc, stat, due, last) -> DBBook desc stat due last )
-          <$> rows
+          <$> (flip map rows
+                (\(a, b, l, l') 
+                  -> (a, b, localTimeToUTC utc l, localTimeToUTC utc l'))
+            )
 
 retrievePassQuery :: Query
 retrievePassQuery = "select password from profile where username = ?"
