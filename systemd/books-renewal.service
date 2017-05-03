@@ -1,6 +1,7 @@
 [Unit]
 Description=Books Renewal Webservice
 Wants=nginx.service
+WorkingDirectory=/home/renewal/books
 
 [Service]
 ExecStart=/home/renewal/books/bin/books
