@@ -36,7 +36,7 @@
       return re.test(email);
     }
 
-    function validateInput() {
+    function validateUsername() {
       var username = $('#username-input');
       return username.text() && validateEmail(username.text());
     }
