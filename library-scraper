@@ -18,6 +18,11 @@ Action to perform on McGill library
 '''
 ACTION = argv[1]
 
+'''
+Tags to strip from all HTML
+'''
+INVALID_TAGS = ["br", "a"]
+
 BASE = "https://catalogue.mcgill.ca/F/?func=login-session"
 
 s = requests.Session()
@@ -107,6 +112,9 @@ def lookup():
 def clean_soup(soup):
     for tag in soup.findAll(True): 
         tag.attrs = None
+    for tag in INVALID_TAGS:
+        for match in soup.findAll(tag):
+            match.replaceWithChildren()
     return soup
 
 def main():
