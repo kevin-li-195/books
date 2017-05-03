@@ -1,9 +1,9 @@
 BEGIN;
 
+DROP TABLE IF EXISTS notification_setting;
 DROP TABLE IF EXISTS renewal_item;
 DROP TABLE IF EXISTS renewal;
 DROP TABLE IF EXISTS profile;
-DROP TABLE IF EXISTS notification_setting;
 
 CREATE TABLE profile (
     id SERIAL PRIMARY KEY,
@@ -68,7 +68,7 @@ CREATE TABLE renewal_item (
     -- TODO: Parse comment for success/failure
     renewal_status INTEGER NOT NULL,
     -- TODO: Add library, barcode, itemdesc info
-    comment TEXT NOT NULL
+    comment TEXT NOT NULL,
 
     CONSTRAINT fk_renewal_id__renewal_id
     FOREIGN KEY ( renewal_id )
