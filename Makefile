@@ -13,8 +13,9 @@ frontend:
 
 backend-deploy: backend
 	mkdir -p bin
+	sudo systemctl stop books-renewal.service
 	cp dist/build/books/books bin/
-	sudo systemctl restart books-renewal.service
+	sudo systemctl start books-renewal.service
 	sudo systemctl status books-renewal.service
 
 backend:
