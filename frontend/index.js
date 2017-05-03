@@ -31,6 +31,28 @@
         $('#signup-card').fadeIn(400, function() {console.log('done');});
     });
 
+    function validateEmail(email) {
+      var re = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+      return re.test(email);
+    }
+
+    function validateInput() {
+      var username = $('#username-input');
+      return username.text() && validateEmail(username.text());
+    }
+
+    function validatePassword() {
+      return $('#password-input').text();
+    }
+
+    var validationErrorsNode = document.getElementById('validation-errors');
+
+    function clearValidationErrors() {
+      while(validationErrorsNode.hasChildren()) {
+        validationErrorsNode.removeChild(validationErrorsNode.lastChild);
+      }
+    }
+
     $('#see-my-books').click(function() {
       // * make username-and-password-input disappear
       // * replace it with a spinner
@@ -40,6 +62,22 @@
       //   create a table showing the user that information
       // * if the response comes back in error, then show the text input fields
       //   again and display "username/password" incorrect
+
+      clearValidationErrors();
+      var hasErrors = false;
+      if(!validateUsername()) {
+        validationErrorsNode.append(
+          "<li> Please provide a valid McGill email address. </li>"
+        );
+        hasErrors = true;
+      }
+      if(!validatePassword()) {
+        validationErrorsNode.append(
+          "<li> Please provide the password. </li>"
+        );
+        hasErrors = true;
+      }
+      if(hasErrors) return;
 
       $('#username-and-password-input input').prop('disabled', true);
       $('#progress').show();

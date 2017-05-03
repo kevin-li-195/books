@@ -27,7 +27,7 @@ div.payment-form {
 }
 
 #progress {
-  display: none;
+  display: hidden;
   width: 100%;
 }
 
