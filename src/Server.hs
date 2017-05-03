@@ -175,7 +175,9 @@ pay conf@Config{..} PaymentInfo{..} = do
             IO.hPrint IO.stderr "Renewing."
             renew conf paymentUsername
             IO.hPrint IO.stderr "Getting renewal profile."
-            getRenewalProfile conf paymentUsername
+            rp <- getRenewalProfile conf paymentUsername
+            IO.hPrint IO.stderr "Got renewal profile."
+            pure rp
          else fail $ "Charge was not paid." ++ (show details)
     Left err -> fail $ show err
 
