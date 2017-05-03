@@ -94,7 +94,7 @@ text :: Parser String
 text = dbg "text" $ many anyChar
 
 thCell :: Parser String
-thCell = dbg "thCell" $ between sc sc $ between th th text
+thCell = dbg "thCell" $ between sc sc $ th *> (text `someTill` th)
 
 -- | Content in the header.
 headerElems :: Parser [String]
@@ -110,7 +110,7 @@ detailedBook = dbg "detailedBook" $ between tr tr dataRow
 
 -- | Data cell
 tdCell :: Parser T.Text
-tdCell = dbg "tdCell" $ T.pack <$> (between sc sc $ between td td text)
+tdCell = dbg "tdCell" $ T.pack <$> (between sc sc $ td *> (text `manyTill` td)
 
 -- | The data contents of a single table row.
 -- Table row has length 11, but
