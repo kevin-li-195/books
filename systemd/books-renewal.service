@@ -4,7 +4,7 @@ Description=Books Renewal Webservice
 [Service]
 ExecStart=/home/renewal/books/bin/books
 EnvironmentFile=/home/renewal/books/.secrets
+Wants=nginx.service
 
 [Install]
 WantedBy=default.target
-Wants=nginx.service
