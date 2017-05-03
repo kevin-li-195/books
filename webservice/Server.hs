@@ -43,7 +43,7 @@ libraryScraper = "./library-scraper"
 
 renewalServer :: Config -> Server RenewalApi
 renewalServer cfg = register cfg :<|> pay cfg :<|> echo where
-  echo :: B.ByteString -> Handler B.ByteString
+  echo :: T.Text -> Handler T.Text
   echo = pure
 
 registerSQLInsertQuery :: Query
@@ -62,7 +62,7 @@ detailedBooks = header *> ((between sc sc detailedBook) `manyTill` eof)
 
 -- | Parser for list of renewal results
 renewalResultsParser :: Parser [RenewalResult]
-renewalResultsParser 
+renewalResultsParser
   = header *> sc *> ((between sc sc renewalResult) `manyTill` eof)
 
 renewalResult :: Parser RenewalResult
@@ -122,7 +122,7 @@ tdCell = T.pack <$> (between sc sc $ td *> (anyChar `manyTill` td))
 -- 'DetailedBook' has 9 fields because
 -- we skip the first few.
 dataRow :: Parser DetailedBook
-dataRow = between sc sc $ do 
+dataRow = between sc sc $ do
       tdCell
       tdCell
       DetailedBook

@@ -1,15 +1,30 @@
-.PHONY: frontend-deploy frontend backend-deploy backend clean
+.PHONY: frontend-deploy frontend backend-deploy backend clean update gen-client clean-deploy
+
+$(shell mkdir -p deploy)
 
 DEPLOYDIR=/srv/http/renewal
 
 deploy: frontend-deploy backend-deploy
 
+clean-deploy:
+	-rm -rf deploy/*
+
 frontend-deploy: frontend
 	rsync -r --delete deploy/ $(DEPLOYDIR)
 
-frontend:
-	rm -r deploy/*
-	cp frontend/* deploy
+frontend: clean-deploy deploy/index.css deploy/index.js deploy/index.html
+
+deploy/index.css: frontend/index.css
+	cp $< $@
+
+deploy/index.html: frontend/index.html
+	cp $< $@
+
+deploy/index.js: frontend/index.js dist/client.js
+	cat $^ > $@
+
+dist/client.js: gen-client
+	cabal run gen-client $@
 
 backend-deploy: backend
 	mkdir -p bin
@@ -18,10 +33,18 @@ backend-deploy: backend
 	sudo systemctl start books-renewal.service
 	sudo systemctl status books-renewal.service
 
-backend:
+backend: lib
+	cabal build exe:books
+
+lib: update
+	cabal build lib:books
+
+gen-client: lib
+	cabal build gen-client
+
+update:
 	cabal update
 	cabal install --only-dependencies
-	cabal build
 
 clean:
 	cabal clean

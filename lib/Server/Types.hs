@@ -9,6 +9,7 @@ module Server.Types where
 
 import Data.Aeson
 import qualified Data.ByteString as BS
+import Data.Proxy ( Proxy(Proxy) )
 import Database.PostgreSQL.Simple
 
 import Data.Time.Clock
@@ -29,8 +30,11 @@ type RenewalApi
     :> ReqBody '[JSON] PaymentInfo
     :> Post '[JSON] RenewalProfile
   :<|> "echo"
-    :> ReqBody '[OctetStream] BS.ByteString
-    :> Post '[OctetStream] BS.ByteString
+    :> ReqBody '[JSON] T.Text
+    :> Post '[JSON] T.Text
+
+renewalApi :: Proxy RenewalApi
+renewalApi = Proxy
 
 data PaymentInfo
   = PaymentInfo
