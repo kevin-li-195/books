@@ -168,8 +168,11 @@ pay conf@Config{..} PaymentInfo{..} = do
     Right details
       -> if chargePaid details
          then liftIO $ do
+            print "Validating account."
             validateAccount conf paymentUsername
+            print "Renewing."
             renew conf paymentUsername
+            print "Getting renewal profile."
             getRenewalProfile conf paymentUsername
          else fail $ "Charge was not paid." ++ (show details)
     Left err -> fail $ show err
