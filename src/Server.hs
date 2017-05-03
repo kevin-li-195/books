@@ -94,7 +94,7 @@ text :: Parser String
 text = dbg "text" $ many anyChar
 
 thCell :: Parser String
-thCell = dbg "thCell" $ between sc sc $ th *> (text `someTill` th)
+thCell = dbg "thCell" $ between sc sc $ th *> (anyChar `manyTill` th)
 
 -- | Content in the header.
 headerElems :: Parser [String]
@@ -110,26 +110,26 @@ detailedBook = dbg "detailedBook" $ between tr tr dataRow
 
 -- | Data cell
 tdCell :: Parser T.Text
-tdCell = dbg "tdCell" $ T.pack <$> (between sc sc $ td *> (text `manyTill` td)
+tdCell = dbg "tdCell" $ T.pack <$> (between sc sc $ td *> (anyChar `manyTill` td))
 
 -- | The data contents of a single table row.
 -- Table row has length 11, but
 -- 'DetailedBook' has 9 fields because
 -- we skip the first few.
 dataRow :: Parser DetailedBook
-dataRow = dbg "dataRow" $ do
-  tdCell
-  tdCell
-  DetailedBook
-    <$> tdCell
-    <*> tdCell
-    <*> tdCell
-    <*> tdCell
-    <*> tdCell
-    <*> tdCell
-    <*> tdCell
-    <*> tdCell
-    <*> tdCell
+dataRow = dbg "dataRow" $ do 
+      tdCell
+      tdCell
+      DetailedBook
+          <$> tdCell
+          <*> tdCell
+          <*> tdCell
+          <*> tdCell
+          <*> tdCell
+          <*> tdCell
+          <*> tdCell
+          <*> tdCell
+          <*> tdCell
 
 -- | Register the 'Registrant' in the database,
 -- and return the freshly generated detailed profile.
