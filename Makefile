@@ -15,6 +15,7 @@ backend-deploy: backend
 	mkdir -p bin
 	cp dist/build/books/books bin/
 	sudo systemctl restart books-renewal.service
+	sudo systemctl status books-renewal.service
 
 backend:
 	cabal clean
