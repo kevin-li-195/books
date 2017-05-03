@@ -31,5 +31,10 @@ div.payment-form {
   width: 100%;
 }
 
+#validation-errors {
+  color: #faa;
+  text-align: left;
+}
+
 /* vim: shiftwidth=2 tw=79
  */
