@@ -1,3 +1,5 @@
+{-# LANGUAGE OverloadedStrings #-}
+
 module Main where
 
 import Server.Types ( renewalApi )
@@ -9,4 +11,5 @@ import System.Environment ( getArgs )
 main :: IO ()
 main = do
   [out] <- getArgs
-  writeJSForAPI renewalApi jquery out
+  let def = defCommonGeneratorOptions
+  writeJSForAPI renewalApi (jqueryWith (def { urlPrefix = "/api" })) out
