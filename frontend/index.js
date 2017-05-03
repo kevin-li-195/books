@@ -38,11 +38,11 @@
 
     function validateUsername() {
       var username = $('#username-input');
-      return username.value() && validateEmail(username.value());
+      return username.val() && validateEmail(username.val());
     }
 
     function validatePassword() {
-      return $('#password-input').value();
+      return $('#password-input').val();
     }
 
     var validationErrorsNode = document.getElementById('validation-errors');
