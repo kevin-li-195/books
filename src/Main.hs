@@ -8,12 +8,15 @@ import Network.Wai ( Application )
 import Network.Wai.Middleware.RequestLogger ( logStdoutDev )
 import Servant
 import System.Environment ( getEnv )
+import System.Directory ( getCurrentDirectory )
 
 import Server
 import Server.Types
 
 main :: IO ()
 main = do
+  cwd <- getCurrentDirectory
+  putStrLn $ "working in " ++ cwd
   connstr <- T.encodeUtf8 . T.pack <$> getEnv "BOOKS_PSQL"
   key <- T.encodeUtf8 . T.pack <$> getEnv "BOOKS_STRIPE_KEY_SECRET"
   config <- newConfig connstr key
