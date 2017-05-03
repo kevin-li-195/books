@@ -41,12 +41,22 @@
     });
 
     $('#submit').click(function() {
-      handler.open({
-        name: 'McGill Book Renewal',
-        description: '4 months of daily book renewals',
-        currency: 'cad',
-        amount: 100,
-      });
+      registerUser(
+        function(profile) {
+          handler.open({
+            name: 'McGill Book Renewal',
+            description: '4 months of daily book renewals',
+            currency: 'cad',
+            amount: 100,
+          });
+        },
+        function(errors) {
+          clearValidationErrors();
+          $(validationErrorsNode).append(
+            '<li> We could not verify your account. Please double-check your username and password. </li>'
+          );
+        }
+      );
     });
 
     window.addEventListener('popstate', function() {
@@ -102,16 +112,7 @@
       return !hasErrors;
     }
 
-    $('#see-my-books').click(function() {
-      // * make username-and-password-input disappear
-      // * replace it with a spinner
-      // * perform ajax to register the user with the current username and
-      //   password
-      // * if the response comes back ok, then we get a list of books, so we
-      //   create a table showing the user that information
-      // * if the response comes back in error, then show the text input fields
-      //   again and display "username/password" incorrect
-
+    function registerUser(success, fail) {
       if(!validateInputs()) return;
 
       $('#username-and-password-input input').prop('disabled', true);
@@ -127,9 +128,21 @@
           trigger: 'onlyFailure'
         },
         function(profile) {
+          hideProgress();
+          success(profile);
+        },
+        function(errors) {
+          hideProgress();
+          fail(errors);
+        }
+      );
+    }
+
+    $('#see-my-books').click(function() {
+      registerUser(
+        function(profile) {
           console.log('it worked');
           console.log(JSON.stringify(profile));
-          hideProgress();
           constructTable(profile.detailedBookList);
         },
         function(errors) {
@@ -137,7 +150,6 @@
           $(validationErrorsNode).append(
             $("<li> An error occurred while fetching your books. </li>")
           );
-          hideProgress();
           console.log('errors ' + JSON.stringify(errors));
         }
       );
