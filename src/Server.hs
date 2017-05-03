@@ -54,14 +54,14 @@ selectUserPassQuery = "select password from profile where username = ?"
 -- | Parser for detailedBooks
 -- given stdout output.
 detailedBooks :: Parser [DetailedBook]
-detailedBooks = header *> sc *> (dbg "detailedBooksDbg" (detailedBook `manyTill` eof))
+detailedBooks = "detailedBooks" `dbg` (header *> sc *> (dbg "detailedBooksDbg" (detailedBook `manyTill` eof)))
 
 -- | Parser for list of renewal results
 renewalResultsParser :: Parser [RenewalResult]
-renewalResultsParser = header *> sc *> (dbg "renewalDbg" (renewalResult `manyTill` eof))
+renewalResultsParser = "renewalResultsParser" `dbg` (header *> sc *> (renewalResult `manyTill` eof))
 
 renewalResult :: Parser RenewalResult
-renewalResult = do
+renewalResult = dbg "renewalResult" $ do
   tdCell
   RenewalResult
     <$> tdCell
@@ -75,49 +75,49 @@ renewalResult = do
 
 -- | Space consuming parser.
 sc :: Parser ()
-sc = skipMany spaceChar
+sc = dbg "sc" $ skipMany spaceChar
 
 -- | Table data tag
 td :: Parser String
-td = try (string "<td>") <|> (string "</td>")
+td = dbg "td" $ try (string "<td>") <|> (string "</td>")
 
 -- | Table row tag
 tr :: Parser String
-tr = try (string "<tr>") <|> (string "</tr>")
+tr = dbg "tr" $ try (string "<tr>") <|> (string "</tr>")
 
 -- | Table header tag
 th :: Parser String
-th = try (string "<th>") <|> (string "</th>")
+th = dbg "th" $ try (string "<th>") <|> (string "</th>")
 
 -- | Parser for text.
 text :: Parser String
-text = many anyChar
+text = dbg "text" $ many anyChar
 
 thCell :: Parser String
-thCell = between sc sc $ between th th text
+thCell = dbg "thCell" $ between sc sc $ between th th text
 
 -- | Content in the header.
 headerElems :: Parser [String]
-headerElems = between sc sc $ many thCell
+headerElems = dbg "headerElems" $ thCell `sepBy` sc
 
 -- | The entire header
 header :: Parser [String]
-header = between tr tr headerElems
+header = dbg "header" $ between tr tr headerElems
 
 -- | The whole row.
 detailedBook :: Parser DetailedBook
-detailedBook = between tr tr dataRow
+detailedBook = dbg "detailedBook" $ between tr tr dataRow
 
 -- | Data cell
 tdCell :: Parser T.Text
-tdCell = T.pack <$> (between sc sc $ between td td text)
+tdCell = dbg "tdCell" $ T.pack <$> (between sc sc $ between td td text)
 
 -- | The data contents of a single table row.
 -- Table row has length 11, but
 -- 'DetailedBook' has 9 fields because
 -- we skip the first few.
 dataRow :: Parser DetailedBook
-dataRow = do
+dataRow = dbg "dataRow" $ do
   tdCell
   tdCell
   DetailedBook
