@@ -1,0 +1,10 @@
+[Unit]
+Description=Books Renewal Webservice
+
+[Service]
+ExecStart=/home/renewal/books/bin/books
+EnvironmentFile=/home/renewal/books/.secrets
+
+[Install]
+WantedBy=default.target
+Wants=nginx.service
