@@ -89,6 +89,24 @@
       $('#username-and-password-input input').prop('disabled', true);
       console.log('inputs are disabled');
       $('#progress').css('visibility', 'visible');
+
+      postRegister(
+        {
+          registrantUsername: $('#username-input').val(),
+          notificationEmail: '',
+          pass: $('#password-input').val(),
+          phoneNumber: '',
+          trigger: 'onlyFailure'
+        },
+        function(profile) {
+          console.log('it worked');
+          console.log(JSON.stringify(profile));
+          $('#progress').css('visibility', 'hidden');
+        },
+        function(errors) {
+          console.log('errors ' + JSON.stringify(errors));
+        },
+      );
     });
 
     function onUnload() {
