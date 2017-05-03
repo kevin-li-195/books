@@ -221,7 +221,9 @@ renew Config{..} u = do
     ExitSuccess -> case runParser renewalResultsParser "renewal" stdout of
       Right a -> do
         -- Put renewal results in DB.
+        print "Inserting renewal."
         [Only rID] :: [Only Int] <- query dbconn insertRenewalQuery (Only $ unUsername u)
+        print "Inserted renewal."
         let rs = map (\r ->
                   ( rID
                   , renewalDescription r
@@ -232,7 +234,9 @@ renew Config{..} u = do
                   , 0 :: Int -- For now, always assume success.
                   , renewalComment r
                   )) a
+        print "Inserting renewal items."
         executeMany dbconn insertRenewalItemsQuery rs
+        print "Inserted renewal items."
         pure a
       Left b -> fail $ "Parser error: " ++ (show b) ++ "Dumping stdout: " ++ stdout ++ "Dumping stderr: " ++ stderr
     ExitFailure _ -> fail $ "Renewal failure occurred. \
