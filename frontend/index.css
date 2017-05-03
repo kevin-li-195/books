@@ -38,6 +38,9 @@ div.payment-form {
 
 #table {
   display: none;
+
+  border-collapse: collapse;
+  border: 1px solid #555;
 }
 
 /* vim: shiftwidth=2 tw=79
