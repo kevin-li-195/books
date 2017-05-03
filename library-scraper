@@ -73,19 +73,16 @@ def renew():
 
     resp = BeautifulSoup(s.get(RENEW_LINK).text, "html.parser")
 
-    print("Dumping response.")
-    print(resp)
-
     tab = resp.findAll("table")
 
     if tab is None:
         print("ERROR: No tables found.")
         exit(1)
 
-    print("Dumping tables.")
-    for i in range(len(tab)):
-        print("%dth table" % i)
-        print(tab[i])
+    t = tab[0]
+
+    for tr in t.findAll("tr"):
+        print(tr)
 
 def lookup():
     loan_page = s.get(POST_LINK + "?func=bor-loan")
@@ -105,7 +102,7 @@ def main():
     # Now logged in in Session s.
     if ACTION == "renew":
         renew()
-    if ACTION == "lookup":
+    elif ACTION == "lookup":
         lookup()
 
 if __name__ == "__main__":
