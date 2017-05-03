@@ -41,6 +41,11 @@ div.payment-form {
 
   border-collapse: collapse;
   border: 1px solid #555;
+  margin: 1em 0;
+}
+
+#table td, #table th {
+  padding 0.5em 0.1em;
 }
 
 /* vim: shiftwidth=2 tw=79
