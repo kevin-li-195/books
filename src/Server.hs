@@ -43,10 +43,10 @@ renewalServer cfg = register cfg :<|> pay cfg :<|> echo where
   echo = pure
 
 registerSQLInsertQuery :: Query
-registerSQLInsertQuery = "insert into profile (username, password, email_address, phone_number) values (?, ?, ?, ?)"
+registerSQLInsertQuery = "insert into profile (username, password, email_address, phone_number) values (?, ?, ?, ?) returning id"
 
 notificationSettingInsertQuery :: Query
-notificationSettingInsertQuery = "insert into notification_setting (profile_id, notification_level) values (?, ?) returning id"
+notificationSettingInsertQuery = "insert into notification_setting (profile_id, notification_level) values (?, ?)"
 
 selectUserPassQuery :: Query
 selectUserPassQuery = "select password from profile where username = ?"
@@ -136,7 +136,7 @@ dataRow = do
 -- from immediately scraping the library webpage.
 register :: Config -> Registrant -> Handler DetailedProfile
 register Config{..} Registrant{..} = do
-  id <- liftIO $ execute dbconn registerSQLInsertQuery
+  [Only id] :: [Only Int] <- liftIO $ query dbconn registerSQLInsertQuery
             (unUsername registrantUsername, pass, notificationEmail, phoneNumber)
   liftIO $ execute dbconn notificationSettingInsertQuery (id, triggerToInt trigger)
   (exitcode, stdout, stderr) <- liftIO $
