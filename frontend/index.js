@@ -109,6 +109,7 @@
           $(validationErrorsNode).append(
             $("<li> An error occurred while fetching your books. </li>")
           );
+          $('#progress').css('visibility', 'hidden');
           console.log('errors ' + JSON.stringify(errors));
         }
       );
