@@ -90,6 +90,17 @@
       console.log('inputs are disabled');
       $('#progress').show();
     });
+
+    function onUnload() {
+      $('#username-and-password-input input').prop('disabled', false);
+    }
+
+
+    function onPageShow() {
+      window.addEventListener('unload', onUnload, false);
+    }
+
+    window.addEventListener('pageshow', onPageShow, false);
   });
 })();
 
