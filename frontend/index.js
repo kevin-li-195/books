@@ -67,13 +67,13 @@
       var hasErrors = false;
       if(!validateUsername()) {
         validationErrorsNode.append(
-          "<li> Please provide a valid McGill email address. </li>"
+          $("<li> Please provide a valid McGill email address. </li>")
         );
         hasErrors = true;
       }
       if(!validatePassword()) {
         validationErrorsNode.append(
-          "<li> Please provide the password. </li>"
+          $("<li> Please provide the password. </li>")
         );
         hasErrors = true;
       }
