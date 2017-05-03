@@ -88,7 +88,7 @@
 
       $('#username-and-password-input input').prop('disabled', true);
       console.log('inputs are disabled');
-      $('#progress').show();
+      $('#progress').css('visibility', 'visible');
     });
 
     function onUnload() {
