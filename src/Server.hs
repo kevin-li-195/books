@@ -18,6 +18,7 @@ import qualified Data.ByteString as B
 import qualified Data.Text as T
 
 import Data.Time.Clock
+import Data.Time.Format
 
 import Database.PostgreSQL.Simple
 import Web.Stripe.Charge
@@ -197,6 +198,12 @@ getRenewalProfile Config{..} u = do
 retrievePassQuery :: Query
 retrievePassQuery = "select password from profile where username = ?"
 
+insertRenewalQuery :: Query
+insertRenewalQuery = "insert into renewal (profile_id) values (select id from profile where username = ?) returning id"
+
+insertRenewalItemsQuery :: Query
+insertRenewalItemsQuery = "insert into renewal_item (renewal_id, description, item_status, due_date, renewal_status, comment) values (?, ?, ?, ?, ?, ?)"
+
 -- | Try to renew all books of given 'Username' and
 -- return results.
 renew :: Config -> Username -> IO [RenewalResult]
@@ -212,7 +219,21 @@ renew Config{..} u = do
                 ""
   case exitcode of
     ExitSuccess -> case runParser renewalResultsParser "renewal" stdout of
-      Right a -> pure a
+      Right a -> do
+        -- Put renewal results in DB.
+        [Only rID] :: [Only Int] <- query dbconn insertRenewalQuery (Only $ unUsername u)
+        let rs = map (\r ->
+                  ( rID
+                  , renewalDescription r
+                  , renewalItemStatus r
+                  , case parseTimeM True defaultTimeLocale "%B %e %Y-%R" ((T.unpack $ renewalDueDate r) ++ "-23:59") of
+                    Just t -> t :: UTCTime
+                    Nothing -> error "Failed ot parse time"
+                  , 0 :: Int -- For now, always assume success.
+                  , renewalComment r
+                  )) a
+        executeMany dbconn insertRenewalItemsQuery rs
+        pure a
       Left b -> fail $ "Parser error: " ++ (show b) ++ "Dumping stdout: " ++ stdout ++ "Dumping stderr: " ++ stderr
     ExitFailure _ -> fail $ "Renewal failure occurred. \
       \Dumping stdout and stderr: "
