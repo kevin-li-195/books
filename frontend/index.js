@@ -102,12 +102,38 @@
           console.log('it worked');
           console.log(JSON.stringify(profile));
           $('#progress').css('visibility', 'hidden');
+          constructTable(profile.detailedBookList);
         },
         function(errors) {
+          clearValidationErrors();
+          $(validationErrorsNode).append(
+            $("<li> An error occurred while fetching your books. </li>")
+          );
           console.log('errors ' + JSON.stringify(errors));
         }
       );
     });
+
+    var table = $('#table');
+
+    function clearTable() {
+      table.children('td').remove();
+    }
+
+    function constructTable(books) {
+      clearTable();
+      books.forEach(function(book) {
+        var tr = $('<tr></tr>');
+        tr.append($('<td></td>').text(book.description));
+        tr.append($('<td></td>').text(book.library));
+        tr.append($('<td></td>').text(book.accruingFine));
+        tr.append($('<td></td>').text(book.dueDate + ' ' + book.dueHour));
+        tr.append($('<td></td>').text(book.year));
+        tr.append($('<td></td>').text(book.renewals));
+        table.append(tr);
+      });
+      table.show();
+    }
 
     function onUnload() {
       $('#username-and-password-input input').prop('disabled', false);

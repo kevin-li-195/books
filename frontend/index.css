@@ -36,5 +36,9 @@ div.payment-form {
   text-align: left;
 }
 
+#table {
+  display: none;
+}
+
 /* vim: shiftwidth=2 tw=79
  */
