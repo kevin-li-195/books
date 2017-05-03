@@ -1,4 +1,4 @@
-.PHONY: frontend-deploy frontend backend-deploy backend
+.PHONY: frontend-deploy frontend backend-deploy backend clean
 
 DEPLOYDIR=/srv/http/renewal
 
@@ -19,7 +19,9 @@ backend-deploy: backend
 	sudo systemctl status books-renewal.service
 
 backend:
-	cabal clean
 	cabal update
 	cabal install --only-dependencies
 	cabal build
+
+clean:
+	cabal clean
