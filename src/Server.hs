@@ -54,11 +54,11 @@ selectUserPassQuery = "select password from profile where username = ?"
 -- | Parser for detailedBooks
 -- given stdout output.
 detailedBooks :: Parser [DetailedBook]
-detailedBooks = header *> many detailedBook
+detailedBooks = header *> sc *> many detailedBook
 
 -- | Parser for list of renewal results
 renewalResultsParser :: Parser [RenewalResult]
-renewalResultsParser = header *> many renewalResult
+renewalResultsParser = header *> sc *> many renewalResult
 
 renewalResult :: Parser RenewalResult
 renewalResult = do
@@ -94,11 +94,11 @@ text :: Parser String
 text = many anyChar
 
 thCell :: Parser String
-thCell = between th th text
+thCell = between sc sc $ between th th text
 
 -- | Content in the header.
 headerElems :: Parser [String]
-headerElems = many thCell
+headerElems = between sc sc $ many thCell
 
 -- | The entire header
 header :: Parser [String]
@@ -110,7 +110,7 @@ detailedBook = between tr tr dataRow
 
 -- | Data cell
 tdCell :: Parser T.Text
-tdCell = T.pack <$> between td td text
+tdCell = T.pack <$> (between sc sc $ between td td text)
 
 -- | The data contents of a single table row.
 -- Table row has length 11, but
