@@ -4,5 +4,5 @@ ssh jerrington.me bash <<EOF
 sudo su-renewal
 cd books
 git pull
-make
+make $1
 EOF
