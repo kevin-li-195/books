@@ -29,7 +29,7 @@ import Servant.API
 import Server.Types
 
 import System.Process
-import System.IO
+import qualified System.IO as IO
 import System.Exit
 
 import Text.Megaparsec
@@ -164,17 +164,17 @@ pmt = createCharge (Amount 100) CAD
 
 pay :: Config -> PaymentInfo -> Handler RenewalProfile
 pay conf@Config{..} PaymentInfo{..} = do
-  liftIO $ hPrint stderr "Hello there."
+  liftIO $ IO.hPrint IO.stderr "Hello there."
   result <- liftIO $ stripe stripeConfig $ pmt -&- tokenId
   case result of
     Right details
       -> if chargePaid details
          then liftIO $ do
-            hPrint stderr "Validating account."
+            IO.hPrint IO.stderr "Validating account."
             validateAccount conf paymentUsername
-            hPrint stderr "Renewing."
+            IO.hPrint IO.stderr "Renewing."
             renew conf paymentUsername
-            hPrint stderr "Getting renewal profile."
+            IO.hPrint IO.stderr "Getting renewal profile."
             getRenewalProfile conf paymentUsername
          else fail $ "Charge was not paid." ++ (show details)
     Left err -> fail $ show err
@@ -226,9 +226,9 @@ renew Config{..} u = do
     ExitSuccess -> case runParser renewalResultsParser "renewal" stdout of
       Right a -> do
         -- Put renewal results in DB.
-        hPrint stderr "Inserting renewal."
+        IO.hPrint IO.stderr "Inserting renewal."
         [Only rID] :: [Only Int] <- query dbconn insertRenewalQuery (Only $ unUsername u)
-        hPrint stderr "Inserted renewal."
+        IO.hPrint IO.stderr "Inserted renewal."
         let rs = map (\r ->
                   ( rID
                   , renewalDescription r
@@ -239,9 +239,9 @@ renew Config{..} u = do
                   , 0 :: Int -- For now, always assume success.
                   , renewalComment r
                   )) a
-        hPrint stderr "Inserting renewal items."
+        IO.hPrint IO.stderr "Inserting renewal items."
         executeMany dbconn insertRenewalItemsQuery rs
-        hPrint stderr "Inserted renewal items."
+        IO.hPrint IO.stderr "Inserted renewal items."
         pure a
       Left b -> fail $ "Parser error: " ++ (show b) ++ "Dumping stdout: " ++ stdout ++ "Dumping stderr: " ++ stderr
     ExitFailure _ -> fail $ "Renewal failure occurred. \
