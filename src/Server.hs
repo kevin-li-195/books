@@ -170,11 +170,11 @@ pay conf@Config{..} PaymentInfo{..} = do
     Right details
       -> if chargePaid details
          then liftIO $ do
-            print "Validating account."
+            hPrint stderr "Validating account."
             validateAccount conf paymentUsername
-            print "Renewing."
+            hPrint stderr "Renewing."
             renew conf paymentUsername
-            print "Getting renewal profile."
+            hPrint stderr "Getting renewal profile."
             getRenewalProfile conf paymentUsername
          else fail $ "Charge was not paid." ++ (show details)
     Left err -> fail $ show err
@@ -226,9 +226,9 @@ renew Config{..} u = do
     ExitSuccess -> case runParser renewalResultsParser "renewal" stdout of
       Right a -> do
         -- Put renewal results in DB.
-        print "Inserting renewal."
+        hPrint stderr "Inserting renewal."
         [Only rID] :: [Only Int] <- query dbconn insertRenewalQuery (Only $ unUsername u)
-        print "Inserted renewal."
+        hPrint stderr "Inserted renewal."
         let rs = map (\r ->
                   ( rID
                   , renewalDescription r
@@ -239,9 +239,9 @@ renew Config{..} u = do
                   , 0 :: Int -- For now, always assume success.
                   , renewalComment r
                   )) a
-        print "Inserting renewal items."
+        hPrint stderr "Inserting renewal items."
         executeMany dbconn insertRenewalItemsQuery rs
-        print "Inserted renewal items."
+        hPrint stderr "Inserted renewal items."
         pure a
       Left b -> fail $ "Parser error: " ++ (show b) ++ "Dumping stdout: " ++ stdout ++ "Dumping stderr: " ++ stderr
     ExitFailure _ -> fail $ "Renewal failure occurred. \
