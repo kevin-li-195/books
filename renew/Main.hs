@@ -1,6 +1,10 @@
+{-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE RecordWildCards #-}
+
 module Main where
 
-import Renewal.DB
+import qualified Renewal.DB as DB
+import qualified Renewal.LibraryScraper as Library
 import Renewal.Types
 
 import Data.ByteString ( ByteString )
@@ -12,7 +16,16 @@ import System.Environment ( getEnv )
 main :: IO ()
 main = do
   conn <- connectPostgreSQL =<< (utf8 <$> getEnv "BOOKS_PSQL")
-  pure ()
+  DB.getAllActiveUsers conn >>= mapM_ (processUser conn)
+
+processUser :: Connection -> DB.DBProfile -> IO ()
+processUser conn DB.DBProfile{..} = do
+  Library.renew dbProfileUsername dbProfilePassword >>= \case
+    Right results -> do
+      renewalId <- DB.createRenewal dbProfileUsername conn
+      _ <- DB.createRenewalItems renewalId results conn
+      pure ()
+    Left e -> fail (Library.formatError e)
 
 utf8 :: String -> ByteString
 utf8 = T.encodeUtf8 . T.pack
