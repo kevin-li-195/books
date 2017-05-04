@@ -16,6 +16,7 @@ import Data.Time.LocalTime
 import Database.PostgreSQL.Simple
 import Database.PostgreSQL.Simple.FromField
 import Database.PostgreSQL.Simple.ToField
+import Database.PostgreSQL.Simple.FromRow
 
 newtype ProfileId = ProfileId { unProfileId :: Int }
   deriving (FromField, ToField, FromJSON, ToJSON)
@@ -32,17 +33,38 @@ newtype NotificationSettingId
     }
   deriving (FromField, ToField, FromJSON, ToJSON)
 
+data DBProfile
+  = DBProfile
+    { dbProfileId :: ProfileId
+    , dbProfileUsername :: Username
+    , dbProfilePassword :: Password
+    , dbProfileEmail :: Email
+    , dbProfilePhoneNumber :: PhoneNumber
+    , dbProfileCreatedAt :: UTCTime
+    , dbProfileServiceExpiry :: UTCTime
+    }
+
+instance FromRow DBProfile where
+  fromRow = DBProfile
+    <$> field
+    <*> field
+    <*> field
+    <*> field
+    <*> field
+    <*> field
+    <*> field
+
 -- | Sets the user's service expiry date to 'serviceExpiryTime' in the future.
-updateServiceExpiry :: Username -> Config -> IO ()
-updateServiceExpiry u Config{..} = void (execute dbconn q (Only u)) where
+updateServiceExpiry :: Username -> Connection -> IO ()
+updateServiceExpiry u dbconn = void (execute dbconn q (Only u)) where
   q = fromString $
     "update profile set \
     \(service_expiry) = (now() + interval '" ++ serviceExpiryTime ++ "') \
     \where username = ?"
 
 -- | Creates a new payment record for the given user.
-createPayment :: Username -> Config -> IO ()
-createPayment u Config{..} = void (execute dbconn q (Only u)) where
+createPayment :: Username -> Connection -> IO ()
+createPayment u dbconn = void (execute dbconn q (Only u)) where
   q = fromString $
     "insert into payment (profile_id, amount_cts) \
     \(select id, " ++ show chargeAmountCts ++ " from profile \
@@ -53,21 +75,21 @@ getRenewalProfileQuery = "select i.description, i.item_status, i.due_date, r.cre
 
 -- | Return the current 'RenewalProfile' of the given 'Username'
 -- based on the current database status.
-getRenewalProfile :: Username -> Config -> IO RenewalProfile
-getRenewalProfile u Config{..} = do
+getRenewalProfile :: Username -> Connection -> IO RenewalProfile
+getRenewalProfile u dbconn = do
   rows {- :: [(T.Text, T.Text, LocalTime, LocalTime)] -} <-
     query dbconn getRenewalProfileQuery (u, u)
   let f = localTimeToUTC utc
   pure $ RenewalProfile $
     rows <&> (\(desc, stat, due, l) -> DBBook desc stat (f due) (f l))
 
-getPassword :: Username -> Config -> IO (Maybe Password)
-getPassword u Config{..}
+getPassword :: Username -> Connection -> IO (Maybe Password)
+getPassword u dbconn
   = fmap fromOnly . listToMaybe <$> query dbconn q (Only u) where
     q = "select password from profile where username = ?"
 
-createRenewal :: Username -> Config -> IO RenewalId
-createRenewal u Config{..}
+createRenewal :: Username -> Connection -> IO RenewalId
+createRenewal u dbconn
   = fromOnly . head <$> query dbconn q (Only u) where
     q =
       "insert into renewal (profile_id) \
@@ -92,9 +114,9 @@ renewalItemTuple rid r@RenewalResult{..} = do
 createRenewalItem
   :: RenewalId
   -> RenewalResult
-  -> Config
+  -> Connection
   -> IO RenewalItemId
-createRenewalItem rid r Config{..} = m where
+createRenewalItem rid r dbconn = m where
   m = fromOnly . head <$> query dbconn q t
   r' = renewalItemTuple rid r
   t = maybe (error "failed to prepare renewalresult)") id r'
@@ -106,9 +128,9 @@ createRenewalItem rid r Config{..} = m where
 createRenewalItems
   :: RenewalId
   -> [RenewalResult]
-  -> Config
+  -> Connection
   -> IO [RenewalItemId]
-createRenewalItems rid params Config{..} = m where
+createRenewalItems rid params dbconn = m where
   m = fmap fromOnly <$> returning dbconn q params'
   unsafe = maybe (error "failed to parse") id . renewalItemTuple rid
   params' = map unsafe params
@@ -118,16 +140,23 @@ createRenewalItems rid params Config{..} = m where
     \ values (?, ?, ?, ?, ?, ?) returning id"
 
 createProfile
-  :: Username -> Password -> Email -> PhoneNumber -> Config -> IO ProfileId
-createProfile u p e n Config{..}
+  :: Username -> Password -> Email -> PhoneNumber -> Connection -> IO ProfileId
+createProfile u p e n dbconn
   = fromOnly . head <$> query dbconn q (u, p, e, n) where
     q =
       "insert into profile (username, password, email_address, phone_number) \
       \ values (?, ?, ?, ?) returning id"
 
-createNotificationSetting :: ProfileId -> Trigger -> Config -> IO ()
-createNotificationSetting p t Config{..} = void m where
+createNotificationSetting :: ProfileId -> Trigger -> Connection -> IO ()
+createNotificationSetting p t dbconn = void m where
   m = execute dbconn q (p, triggerToInt t)
   q =
     "insert into notification_setting (profile_id, notification_level) \
     \values (?, ?)"
+
+getAllActiveUsers :: Connection -> IO [DBProfile]
+getAllActiveUsers dbconn = query_ dbconn q where
+  q =
+    "select id, username, password, email_address, phone_number, created_at, service_expiry \
+    \from profile \
+    \where service_expiry < now()"

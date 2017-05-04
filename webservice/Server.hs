@@ -22,28 +22,29 @@ import Renewal.Types
 import Control.Monad
 import Control.Monad.Trans
 import qualified Data.Text as T
+import Database.PostgreSQL.Simple ( Connection )
 import Servant
 import qualified System.IO as IO
 import Web.Stripe.Charge
 import Web.Stripe
 
 renewalServer :: Config -> Server RenewalApi
-renewalServer cfg = register cfg :<|> pay cfg :<|> echo where
+renewalServer conf@Config{..} = register dbconn :<|> pay conf :<|> echo where
   echo :: T.Text -> Handler T.Text
   echo = pure
 
 -- | Register the 'Registrant' in the database,
 -- and return the freshly generated detailed profile.
 -- from immediately scraping the library webpage.
-register :: Config -> Registrant -> Handler DetailedProfile
-register conf Registrant{..} = do
+register :: Connection -> Registrant -> Handler DetailedProfile
+register dbconn Registrant{..} = do
   let username = registrantUsername
   let email = notificationEmail
 
   liftIO (Library.checkUser username pass) >>= \case
     Right books -> liftIO $ do
-      profileId <- DB.createProfile username pass email phoneNumber conf
-      void $ DB.createNotificationSetting profileId trigger conf
+      profileId <- DB.createProfile username pass email phoneNumber dbconn
+      void $ DB.createNotificationSetting profileId trigger dbconn
 
       pure (DetailedProfile books)
     Left err -> fail (Library.formatError err)
@@ -53,23 +54,23 @@ pmt :: StripeRequest CreateCharge
 pmt = createCharge (Amount chargeAmountCts) CAD
 
 pay :: Config -> PaymentInfo -> Handler RenewalProfile
-pay conf@Config{..} PaymentInfo{..} = do
+pay Config{..} PaymentInfo{..} = do
   liftIO $ IO.hPrint IO.stderr (id @String "Hello there.")
   result <- liftIO $ stripe stripeConfig $ pmt -&- tokenId
   case result of
     Right details
       | chargePaid details -> liftIO $ do
         IO.hPrint IO.stderr $ id @String "Marking account paid."
-        DB.createPayment paymentUsername conf
+        DB.createPayment paymentUsername dbconn
 
         IO.hPrint IO.stderr $ id @String "Updating service expiry."
-        DB.updateServiceExpiry paymentUsername conf
+        DB.updateServiceExpiry paymentUsername dbconn
 
         IO.hPrint IO.stderr $ id @String "Renewing."
-        _ <- renew paymentUsername conf
+        _ <- renew paymentUsername dbconn
 
         IO.hPrint IO.stderr $ id @String "Getting renewal profile."
-        rp <- DB.getRenewalProfile paymentUsername conf
+        rp <- DB.getRenewalProfile paymentUsername dbconn
 
         IO.hPrint IO.stderr $ id @String "Got renewal profile."
         pure rp
@@ -78,13 +79,13 @@ pay conf@Config{..} PaymentInfo{..} = do
     Left err -> fail $ show err
 
 -- | Try to renew all books of given 'Username' and return results.
-renew :: Username -> Config -> IO [RenewalResult]
-renew u conf@Config{..} = do
-  pass <- maybe (fail "unknown username") pure =<< DB.getPassword u conf
+renew :: Username -> Connection -> IO [RenewalResult]
+renew u dbconn = do
+  pass <- maybe (fail "unknown username") pure =<< DB.getPassword u dbconn
 
   liftIO (Library.renew u pass) >>= \case
     Right results -> liftIO $ do
-      renewalId <- DB.createRenewal u conf
-      _ <- DB.createRenewalItems renewalId results conf
+      renewalId <- DB.createRenewal u dbconn
+      _ <- DB.createRenewalItems renewalId results dbconn
       pure results
     Left e -> fail (Library.formatError e)

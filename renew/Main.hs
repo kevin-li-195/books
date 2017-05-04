@@ -1,5 +1,6 @@
 module Main where
 
+import Renewal.DB
 import Renewal.Types
 
 import Data.ByteString ( ByteString )
