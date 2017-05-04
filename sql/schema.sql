@@ -1,5 +1,6 @@
 BEGIN;
 
+DROP TABLE IF EXISTS payment;
 DROP TABLE IF EXISTS notification_setting;
 DROP TABLE IF EXISTS renewal_item;
 DROP TABLE IF EXISTS renewal;
@@ -16,14 +17,23 @@ CREATE TABLE profile (
     -- for alerts
     phone_number TEXT,
     created_at TIMESTAMP NOT NULL DEFAULT ( now() ),
-    -- whether the account has already paid
-    paid BOOLEAN NOT NULL DEFAULT ( false ),
-    -- the time at which the account was paid
-    time_paid TIMESTAMP,
+    service_expiry TIMESTAMP,
 
     UNIQUE ( username ),
     UNIQUE ( email_address ),
     UNIQUE ( phone_number )
+);
+
+CREATE TABLE payment (
+    id SERIAL PRIMARY KEY,
+    profile_id INTEGER NOT NULL,
+    -- the time at which the account was paid
+    amount_cts INTEGER NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT ( now() ),
+
+    CONSTRAINT fk_profile_id__profile_id
+    FOREIGN KEY ( profile_id )
+    REFERENCES profile ( id )
 );
 
 CREATE TABLE notification_setting (
@@ -36,6 +46,8 @@ CREATE TABLE notification_setting (
     -- 4 : monthly digest
     -- 5 : never
     notification_level INTEGER NOT NULL,
+
+    UNIQUE (profile_id, notification_level),
 
     CONSTRAINT fk_profile_id__profile_id
     FOREIGN KEY ( profile_id )

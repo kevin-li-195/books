@@ -1,257 +1,91 @@
-{-# LANGUAGE DataKinds #-}
-{-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE ApplicativeDo #-}
-{-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE DataKinds #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE TypeOperators #-}
 
 module Server where
 
+import Config
+import qualified DB as DB
+
+import Renewal.Types
+import qualified Renewal.LibraryScraper as Library
+
 import Control.Monad
 import Control.Monad.Trans
-
-import qualified Data.ByteString as B
 import qualified Data.Text as T
-
-import Data.Time.Clock
-import Data.Time.LocalTime
-import Data.Time.Format
-
-import Database.PostgreSQL.Simple
+import Servant
+import qualified System.IO as IO
 import Web.Stripe.Charge
 import Web.Stripe
-
-import Servant
-import Servant.API
-import Server.Types
-
-import System.Process
-import qualified System.IO as IO
-import System.Exit
-
-import Text.Megaparsec
-import Text.Megaparsec.Char
-import Text.Megaparsec.String
-
-libraryScraper :: String
-libraryScraper = "./library-scraper"
 
 renewalServer :: Config -> Server RenewalApi
 renewalServer cfg = register cfg :<|> pay cfg :<|> echo where
   echo :: T.Text -> Handler T.Text
   echo = pure
 
-registerSQLInsertQuery :: Query
-registerSQLInsertQuery = "insert into profile (username, password, email_address, phone_number) values (?, ?, ?, ?) returning id"
-
-notificationSettingInsertQuery :: Query
-notificationSettingInsertQuery = "insert into notification_setting (profile_id, notification_level) values (?, ?)"
-
-selectUserPassQuery :: Query
-selectUserPassQuery = "select password from profile where username = ?"
-
--- | Parser for detailedBooks
--- given stdout output.
-detailedBooks :: Parser [DetailedBook]
-detailedBooks = header *> ((between sc sc detailedBook) `manyTill` eof)
-
--- | Parser for list of renewal results
-renewalResultsParser :: Parser [RenewalResult]
-renewalResultsParser
-  = header *> sc *> ((between sc sc renewalResult) `manyTill` eof)
-
-renewalResult :: Parser RenewalResult
-renewalResult = between tr tr $ do
-  tdCell
-  RenewalResult
-    <$> tdCell
-    <*> tdCell
-    <*> tdCell
-    <*> tdCell
-    <*> tdCell
-    <*> tdCell
-    <*> tdCell
-    <*> tdCell
-
--- | Space consuming parser.
-sc :: Parser ()
-sc = skipMany spaceChar
-
--- | Table data tag
-td :: Parser String
-td = try (string "<td>") <|> (string "</td>")
-
--- | Table row tag
-tr :: Parser String
-tr = try (string "<tr>") <|> (string "</tr>")
-
--- | Table header tag
-th :: Parser String
-th = try (string "<th>") <|> (string "</th>")
-
--- | Parser for text.
-text :: Parser String
-text = many anyChar
-
-thCell :: Parser String
-thCell = between sc sc $ th *> (anyChar `manyTill` th)
-
--- | Content in the header.
-headerElems :: Parser [String]
-headerElems = thCell `sepBy` sc
-
--- | The entire header
-header :: Parser [String]
-header = between tr tr headerElems
-
--- | The whole row.
-detailedBook :: Parser DetailedBook
-detailedBook = between tr tr dataRow
-
--- | Data cell
-tdCell :: Parser T.Text
-tdCell = T.pack <$> (between sc sc $ td *> (anyChar `manyTill` td))
-
--- | The data contents of a single table row.
--- Table row has length 11, but
--- 'DetailedBook' has 9 fields because
--- we skip the first few.
-dataRow :: Parser DetailedBook
-dataRow = between sc sc $ do
-      tdCell
-      tdCell
-      DetailedBook
-          <$> tdCell
-          <*> tdCell
-          <*> tdCell
-          <*> tdCell
-          <*> tdCell
-          <*> tdCell
-          <*> tdCell
-          <*> tdCell
-          <*> tdCell
-
 -- | Register the 'Registrant' in the database,
 -- and return the freshly generated detailed profile.
 -- from immediately scraping the library webpage.
 register :: Config -> Registrant -> Handler DetailedProfile
-register Config{..} Registrant{..} = do
-  [Only id] :: [Only Int] <- liftIO $ query dbconn registerSQLInsertQuery
-            (unUsername registrantUsername, pass, notificationEmail, phoneNumber)
-  liftIO $ execute dbconn notificationSettingInsertQuery (id, triggerToInt trigger)
-  (exitcode, stdout, stderr) <- liftIO $
-            readProcessWithExitCode
-                libraryScraper
-                [ "lookup"
-                , T.unpack $ unUsername registrantUsername
-                , T.unpack pass
-                ]
-                ""
-  case exitcode of
-    ExitSuccess -> case runParser detailedBooks "lookup" stdout of
-            Right a -> pure $ DetailedProfile a
-            Left b -> fail $ "Parser error: " ++ (show b) ++ "Dumping stdout: " ++ stdout ++ "Dumping stderr: " ++ stderr
-    ExitFailure _ -> fail $ "Detailed book scrape failure: "
-                ++ stdout
-                ++ stderr
+register conf Registrant{..} = do
+  let username = registrantUsername
+  let email = notificationEmail
 
--- | Base 1 CAD payment.
+  liftIO (Library.checkUser username pass) >>= \case
+    Right books -> liftIO $ do
+      profileId <- DB.createProfile username pass email phoneNumber conf
+      void $ DB.createNotificationSetting profileId trigger conf
+
+      pure (DetailedProfile books)
+    Left err -> fail (Library.formatError err)
+
+-- | Base 1.00 CAD payment.
 pmt :: StripeRequest CreateCharge
-pmt = createCharge (Amount 100) CAD
+pmt = createCharge (Amount chargeAmountCts) CAD
 
 pay :: Config -> PaymentInfo -> Handler RenewalProfile
 pay conf@Config{..} PaymentInfo{..} = do
-  liftIO $ IO.hPrint IO.stderr "Hello there."
+  liftIO $ IO.hPrint IO.stderr (id @String "Hello there.")
   result <- liftIO $ stripe stripeConfig $ pmt -&- tokenId
   case result of
     Right details
-      -> if chargePaid details
-         then liftIO $ do
-            IO.hPrint IO.stderr "Validating account."
-            validateAccount conf paymentUsername
-            IO.hPrint IO.stderr "Renewing."
-            renew conf paymentUsername
-            IO.hPrint IO.stderr "Getting renewal profile."
-            rp <- getRenewalProfile conf paymentUsername
-            IO.hPrint IO.stderr "Got renewal profile."
-            pure rp
-         else fail $ "Charge was not paid." ++ (show details)
+      | chargePaid details -> liftIO $ do
+        IO.hPrint IO.stderr $ id @String "Marking account paid."
+        DB.createPayment paymentUsername conf
+
+        IO.hPrint IO.stderr $ id @String "Updating service expiry."
+        DB.updateServiceExpiry paymentUsername conf
+
+        IO.hPrint IO.stderr $ id @String "Renewing."
+        _ <- renew paymentUsername conf
+
+        IO.hPrint IO.stderr $ id @String "Getting renewal profile."
+        rp <- DB.getRenewalProfile paymentUsername conf
+
+        IO.hPrint IO.stderr $ id @String "Got renewal profile."
+        pure rp
+
+      | otherwise -> fail $ "Charge was not paid." ++ (show details)
     Left err -> fail $ show err
 
-validationQuery :: Query
-validationQuery = "update profile set (paid, time_paid) = (true, now()) where username = ?"
+-- | Try to renew all books of given 'Username' and return results.
+renew :: Username -> Config -> IO [RenewalResult]
+renew u conf@Config{..} = do
+  pass <- maybe (fail "unknown username") pure =<< DB.getPassword u conf
 
--- | Validates the given 'Username' to mark it as paid.
-validateAccount :: Config -> Username -> IO ()
-validateAccount Config{..} u
-  = execute dbconn validationQuery (Only $ unUsername u) >> pure ()
-
-getRenewalProfileQuery :: Query
-getRenewalProfileQuery = "select i.description, i.item_status, i.due_date, r.created_at from profile p inner join renewal r on (r.profile_id = p.id) inner join renewal_item i on (i.renewal_id = r.id) where p.username = ? and r.created_at = (select max(r.created_at) from renewal r inner join profile p on (p.id = r.profile_id) where p.username = ?)"
-
--- | Return the current 'RenewalProfile' of the given 'Username'
--- based on the current database status.
-getRenewalProfile :: Config -> Username -> IO RenewalProfile
-getRenewalProfile Config{..} u = do
-  rows :: [(T.Text, T.Text, LocalTime, LocalTime)] <-
-    query dbconn getRenewalProfileQuery (unUsername u, unUsername u)
-  pure $ RenewalProfile $
-          ( \(desc, stat, due, last) -> DBBook desc stat due last )
-          <$> (flip map rows
-                (\(a, b, l, l') 
-                  -> (a, b, localTimeToUTC utc l, localTimeToUTC utc l'))
-            )
-
-retrievePassQuery :: Query
-retrievePassQuery = "select password from profile where username = ?"
-
-insertRenewalQuery :: Query
-insertRenewalQuery = "insert into renewal (profile_id) (select id from profile where username = ?) returning id"
-
-insertRenewalItemsQuery :: Query
-insertRenewalItemsQuery = "insert into renewal_item (renewal_id, description, item_status, due_date, renewal_status, comment) values (?, ?, ?, ?, ?, ?)"
-
--- | Try to renew all books of given 'Username' and
--- return results.
-renew :: Config -> Username -> IO [RenewalResult]
-renew Config{..} u = do
-  [Only pass] <- query dbconn retrievePassQuery (Only $ unUsername u)
-  (exitcode, stdout, stderr) <- liftIO $
-            readProcessWithExitCode
-                libraryScraper
-                [ "renew"
-                , T.unpack $ unUsername u
-                , T.unpack pass
-                ]
-                ""
-  case exitcode of
-    ExitSuccess -> case runParser renewalResultsParser "renewal" stdout of
-      Right a -> do
-        -- Put renewal results in DB.
-        IO.hPrint IO.stderr "Inserting renewal."
-        [Only rID] :: [Only Int] <- query dbconn insertRenewalQuery (Only $ unUsername u)
-        IO.hPrint IO.stderr "Inserted renewal."
-        let rs = map (\r ->
-                  ( rID
-                  , renewalDescription r
-                  , renewalItemStatus r
-                  , case parseTimeM True defaultTimeLocale "%B %e %Y-%R" ((T.unpack $ renewalDueDate r) ++ "-23:59") of
-                    Just t -> t :: UTCTime
-                    Nothing -> error "Failed ot parse time"
-                  , 0 :: Int -- For now, always assume success.
-                  , renewalComment r
-                  )) a
-        IO.hPrint IO.stderr "Inserting renewal items."
-        executeMany dbconn insertRenewalItemsQuery rs
-        IO.hPrint IO.stderr "Inserted renewal items."
-        pure a
-      Left b -> fail $ "Parser error: " ++ (show b) ++ "Dumping stdout: " ++ stdout ++ "Dumping stderr: " ++ stderr
-    ExitFailure _ -> fail $ "Renewal failure occurred. \
-      \Dumping stdout and stderr: "
-      ++ stdout
-      ++ stderr
+  liftIO (Library.renew u pass) >>= \case
+    Right results -> liftIO $ do
+      renewalId <- DB.createRenewal u conf
+      _ <- DB.createRenewalItems renewalId results conf
+      pure results
+    Left e -> fail (Library.formatError e)

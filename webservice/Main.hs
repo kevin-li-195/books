@@ -1,6 +1,5 @@
 module Main where
 
-import qualified Data.ByteString as BS
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as T
 import Network.Wai.Handler.Warp ( run )
@@ -11,7 +10,7 @@ import System.Environment ( getEnv )
 import System.Directory ( getCurrentDirectory )
 
 import Server
-import Server.Types
+import Renewal.Types
 
 main :: IO ()
 main = do
