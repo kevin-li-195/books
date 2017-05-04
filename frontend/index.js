@@ -129,10 +129,12 @@
         },
         function(profile) {
           hideProgress();
+          $('#username-and-password-input input').prop('disabled', false);
           success(profile);
         },
         function(errors) {
           hideProgress();
+          $('#username-and-password-input input').prop('disabled', false);
           fail(errors);
         }
       );
