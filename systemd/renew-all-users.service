@@ -3,6 +3,7 @@ Description=Renew all books for all active users
 Requires=postgresql.service
 
 [Service]
+Type=oneshot
 ExecStart=/home/renewal/books/bin/renew
 EnvironmentFile=/home/renewal/books/.secrets
 WorkingDirectory=/home/renewal/books

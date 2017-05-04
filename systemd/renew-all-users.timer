@@ -1,0 +1,6 @@
+[Unit]
+Description=Timer for renewing all active users' books
+
+[Timer]
+OnCalendar=daily
+Persistent=true
