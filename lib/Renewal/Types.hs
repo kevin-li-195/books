@@ -28,7 +28,7 @@ type RenewalApi
   :<|> "payment"
     :> ReqBody '[JSON] PaymentInfo
     :> Post '[JSON] RenewalProfile
-  :<|> "check_user"
+  :<|> "checkUser"
     :> ReqBody '[JSON] Username
     :> Post '[JSON] Bool
 
