@@ -161,13 +161,17 @@
     }
 
     $('#see-my-books').click(function() {
+      showProgress();
+
       registerUser(
         function(profile) {
+          hideProgress();
           console.log('it worked');
           console.log(JSON.stringify(profile));
           constructTable(profile.detailedBookList);
         },
         function(errors) {
+          hideProgress();
           clearValidationErrors();
           $(validationErrorsNode).append(
             $("<li> An error occurred while fetching your books. </li>")
