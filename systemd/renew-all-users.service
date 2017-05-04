@@ -4,5 +4,5 @@ Requires=postgresql.service
 
 [Service]
 ExecStart=/home/renewal/books/bin/renew
-EnvironmentFile=/home/renew/books/.secrets
+EnvironmentFile=/home/renewal/books/.secrets
 WorkingDirectory=/home/renewal/books
