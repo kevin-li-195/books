@@ -51,8 +51,8 @@ instance FromRow DBProfile where
     <*> field
     <*> field
     <*> field
-    <*> field
-    <*> field
+    <*> (localTimeToUTC utc <$> field)
+    <*> (localTimeToUTC utc <$> field)
 
 -- | Sets the user's service expiry date to 'serviceExpiryTime' in the future.
 updateServiceExpiry :: Username -> Connection -> IO ()
