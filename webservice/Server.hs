@@ -14,11 +14,10 @@
 
 module Server where
 
-import Config
-import qualified DB as DB
-
-import Renewal.Types
+import Renewal.Config
+import qualified Renewal.DB as DB
 import qualified Renewal.LibraryScraper as Library
+import Renewal.Types
 
 import Control.Monad
 import Control.Monad.Trans

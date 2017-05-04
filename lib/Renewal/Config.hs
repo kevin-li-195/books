@@ -1,4 +1,4 @@
-module Config where
+module Renewal.Config where
 
 chargeAmountCts :: Int
 chargeAmountCts = 100

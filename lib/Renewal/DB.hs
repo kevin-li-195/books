@@ -2,10 +2,9 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards #-}
 
-module DB where
+module Renewal.DB where
 
-import Config ( chargeAmountCts, serviceExpiryTime )
-
+import Renewal.Config ( chargeAmountCts, serviceExpiryTime )
 import Renewal.Types
 
 import Control.Monad ( void )
