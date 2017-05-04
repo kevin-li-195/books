@@ -46,9 +46,7 @@ register dbconn Registrant{..} = do
   liftIO (Library.checkUser username pass) >>= \case
     Right books ->
       liftIO (DB.getPassword username dbconn) >>= \case
-        Just _ -> throwError $ err409
-            { errBody = "Username already registered."
-            }
+        Just _ -> pure (DetailedProfile books)
         Nothing -> liftIO $ do
           profileId <- DB.createProfile username pass email phoneNumber dbconn
           void $ DB.createNotificationSetting profileId trigger dbconn
