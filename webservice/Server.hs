@@ -25,7 +25,6 @@ import qualified Data.Text as T
 import Database.PostgreSQL.Simple ( Connection )
 
 import Servant
-import Servant.Server.Internal.ServantErr
 
 import qualified System.IO as IO
 import Web.Stripe.Charge
@@ -46,13 +45,13 @@ register dbconn Registrant{..} = do
 
   liftIO (Library.checkUser username pass) >>= \case
     Right books ->
-      liftIO (DB.getPassword username conf) >>= \case
-        Just pass -> throwError $ err409
+      liftIO (DB.getPassword username dbconn) >>= \case
+        Just _ -> throwError $ err409
             { errBody = "Username already registered."
             }
         Nothing -> liftIO $ do
-          profileId <- DB.createProfile username pass email phoneNumber conf
-          void $ DB.createNotificationSetting profileId trigger conf
+          profileId <- DB.createProfile username pass email phoneNumber dbconn
+          void $ DB.createNotificationSetting profileId trigger dbconn
           pure (DetailedProfile books)
     Left err -> fail (Library.formatError err)
 
