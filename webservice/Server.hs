@@ -21,7 +21,6 @@ import Renewal.Types
 
 import Control.Monad
 import Control.Monad.Trans
-import qualified Data.Text as T
 import Database.PostgreSQL.Simple ( Connection )
 
 import Servant
@@ -31,9 +30,15 @@ import Web.Stripe.Charge
 import Web.Stripe
 
 renewalServer :: Config -> Server RenewalApi
-renewalServer conf@Config{..} = register dbconn :<|> pay conf :<|> echo where
-  echo :: T.Text -> Handler T.Text
-  echo = pure
+renewalServer conf@Config{..}
+  = register dbconn
+  :<|> pay conf
+  :<|> checkUser dbconn
+
+checkUser :: Connection -> Username -> Handler Bool
+checkUser dbconn u = liftIO (DB.isUserActive u dbconn) >>= \case
+  Nothing -> throwError $ err404 { errBody = "no such user" }
+  Just t -> pure t
 
 -- | Register the 'Registrant' in the database,
 -- and return the freshly generated detailed profile.

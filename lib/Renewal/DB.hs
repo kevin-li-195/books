@@ -160,3 +160,11 @@ getAllActiveUsers dbconn = query_ dbconn q where
     "select id, username, password, email_address, phone_number, created_at, service_expiry \
     \from profile \
     \where service_expiry > now()"
+
+-- | Check whether a user has paid for service.
+--
+-- Returns 'Nothing' if the user doesn't exist.
+isUserActive :: Username -> Connection -> IO (Maybe Bool)
+isUserActive u dbconn = fmap fromOnly . listToMaybe <$> m where
+  m = query dbconn q (Only u)
+  q = "select now() < service_expiry from profile where username = ?"

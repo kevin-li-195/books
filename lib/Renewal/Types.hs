@@ -28,9 +28,9 @@ type RenewalApi
   :<|> "payment"
     :> ReqBody '[JSON] PaymentInfo
     :> Post '[JSON] RenewalProfile
-  :<|> "echo"
-    :> ReqBody '[JSON] T.Text
-    :> Post '[JSON] T.Text
+  :<|> "check_user"
+    :> ReqBody '[JSON] Username
+    :> Post '[JSON] Bool
 
 renewalApi :: Proxy RenewalApi
 renewalApi = Proxy
