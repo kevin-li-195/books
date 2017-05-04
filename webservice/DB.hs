@@ -114,8 +114,9 @@ createRenewalItems rid params Config{..} = m where
   unsafe = maybe (error "failed to parse") id . renewalItemTuple rid
   params' = map unsafe params
   q =
-    "insert into profile (username, password, email_address, phone_number) \
-    \ values (?, ?, ?, ?) returning id"
+    "insert into renewal_item \
+    \(renewal_id, description, item_status, due_date, renewal_status, comment) \
+    \ values (?, ?, ?, ?, ?, ?) returning id"
 
 createProfile
   :: Username -> Password -> Email -> PhoneNumber -> Config -> IO ProfileId
