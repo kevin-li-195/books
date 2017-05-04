@@ -1,10 +1,10 @@
-.PHONY: frontend-deploy frontend backend-deploy backend clean update gen-client clean-deploy
+.PHONY: frontend-deploy frontend backend-deploy backend clean update gen-client clean-deploy bg bg-deploy
 
 $(shell mkdir -p deploy)
 
 DEPLOYDIR=/srv/http/renewal
 
-deploy: frontend-deploy backend-deploy
+deploy: frontend-deploy backend-deploy bg-deploy
 
 clean-deploy:
 	-rm -rf deploy/*
@@ -25,6 +25,12 @@ deploy/index.js: frontend/index.js dist/client.js
 
 dist/client.js: gen-client
 	cabal run gen-client $@
+
+bg-deploy: bg
+	cp dist/build/renew/renew bin/
+
+bg: lib
+	cabal build exe:renew
 
 backend-deploy: backend
 	mkdir -p bin
