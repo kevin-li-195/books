@@ -12,6 +12,7 @@ import qualified Data.Text as T
 import qualified Data.Text.Encoding as T
 import Database.PostgreSQL.Simple
 import System.Environment ( getEnv )
+import System.IO ( hPutStrLn, stderr )
 
 main :: IO ()
 main = do
@@ -20,6 +21,8 @@ main = do
 
 processUser :: Connection -> DB.DBProfile -> IO ()
 processUser conn DB.DBProfile{..} = do
+  hPutStrLn stderr $
+    "renewing books for " ++ T.unpack (unUsername dbProfileUsername)
   Library.renew dbProfileUsername dbProfilePassword >>= \case
     Right results -> do
       renewalId <- DB.createRenewal dbProfileUsername conn
