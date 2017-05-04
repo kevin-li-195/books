@@ -41,16 +41,39 @@
     });
 
     $('#submit').click(function() {
+      showProgress();
       registerUser(
         function(profile) {
-          handler.open({
-            name: 'McGill Book Renewal',
-            description: '4 months of daily book renewals',
-            currency: 'cad',
-            amount: 100,
-          });
+          postCheckUser(
+            $('#username-input').val(),
+            function(exists) {
+              if(exists) {
+                hideProgress();
+                clearValidationErrors();
+                $(validationErrorsNode).append(
+                  '<li> You are already subscribed to the service ! </li>'
+                );
+              }
+              else {
+                hideProgress();
+                handler.open({
+                  name: 'McGill Book Renewal',
+                  description: '4 months of daily book renewals',
+                  currency: 'cad',
+                  amount: 100,
+                });
+              }
+            },
+            function(error) {
+              hideProgress();
+              $(validationErrorsNode).append(
+                '<li> Your user does not exist... somehow. </li>'
+              );
+            }
+          );
         },
         function(errors) {
+          hideProgress();
           clearValidationErrors();
           $(validationErrorsNode).append(
             '<li> We could not verify your account. Please double-check your username and password. </li>'
@@ -117,7 +140,6 @@
 
       $('#username-and-password-input input').prop('disabled', true);
       console.log('inputs are disabled');
-      showProgress();
 
       postRegister(
         {
@@ -128,12 +150,10 @@
           trigger: 'onlyFailure'
         },
         function(profile) {
-          hideProgress();
           $('#username-and-password-input input').prop('disabled', false);
           success(profile);
         },
         function(errors) {
-          hideProgress();
           $('#username-and-password-input input').prop('disabled', false);
           fail(errors);
         }
