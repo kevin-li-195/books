@@ -159,4 +159,4 @@ getAllActiveUsers dbconn = query_ dbconn q where
   q =
     "select id, username, password, email_address, phone_number, created_at, service_expiry \
     \from profile \
-    \where service_expiry < now()"
+    \where service_expiry > now()"
