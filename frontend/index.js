@@ -2,6 +2,9 @@
 (function() {
   var handler = null;
 
+  $('footer').css('bottom', 'initial');
+  $('footer').css('position', 'initial');
+
   $(document).ready(function() {
     var progress = $('#progress');
 
