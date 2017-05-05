@@ -160,6 +160,29 @@
       );
     }
 
+    $('#password-input').on('keypress', function(e) {
+      if (e.which == 13) {
+        showProgress();
+
+        registerUser(
+          function(profile) {
+            hideProgress();
+            console.log('it worked');
+            console.log(JSON.stringify(profile));
+            constructTable(profile.detailedBookList);
+          },
+          function(errors) {
+            hideProgress();
+            clearValidationErrors();
+            $(validationErrorsNode).append(
+              $("<li> An error occurred while fetching your books. </li>")
+            );
+            console.log('errors ' + JSON.stringify(errors));
+          }
+        );
+      }
+    });
+
     $('#see-my-books').click(function() {
       showProgress();
 
