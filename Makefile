@@ -32,7 +32,7 @@ deploy/index.html: frontend/index.html
 PUBKEY=$(shell cat .secrets | grep BOOK_STRIPE_KEY_PUB | cut -d= -f2)
 
 deploy/index.js: frontend/index.js dist/client.js
-	cat $^ | sed "s/STRIPE_CHECKOUT_SECRET_KEY_PLREASE_REPLACE/$(PUBKEY)" > $@
+	cat $^ | sed "s/STRIPE_CHECKOUT_SECRET_KEY_PLREASE_REPLACE/$(PUBKEY)/" > $@
 
 dist/client.js: gen-client
 	cabal run gen-client $@
