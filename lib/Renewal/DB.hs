@@ -4,14 +4,13 @@
 
 module Renewal.DB where
 
-import Renewal.Config ( chargeAmountCts, serviceExpiryTime )
 import Renewal.Types
 
 import Control.Monad ( void )
 import Data.Aeson ( FromJSON, ToJSON )
 import Data.Maybe ( listToMaybe )
 import Data.String ( fromString )
-import Data.Time.Clock ( UTCTime )
+import Data.Time.Clock ( UTCTime, NominalDiffTime )
 import Data.Time.LocalTime
 import Database.PostgreSQL.Simple
 import Database.PostgreSQL.Simple.FromField
