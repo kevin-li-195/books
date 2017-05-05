@@ -1,4 +1,5 @@
 {-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE RecordWildCards #-}
 
@@ -7,12 +8,18 @@ module Main where
 import Control.Monad.Reader
 import Control.Monad.Except
 
+import Control.Concurrent.Async
+import Control.Exception ( throwIO )
 import Data.Aeson
 import Data.Pool
 import qualified Data.ByteString.Lazy as LBS
+import Data.Text ( Text )
 import qualified Data.Text as T
+import qualified Data.Text.Lazy as TL
 import qualified Data.Text.Encoding as T
 import Data.Time.Clock
+import Network.Mail.Mime ( Address(..) )
+import Network.Mail.SMTP ( sendMail, simpleMail, plainTextPart )
 import Network.Wai.Handler.Warp ( run )
 import Network.Wai ( Application )
 import Network.Wai.Middleware.RequestLogger ( logStdoutDev )
@@ -39,10 +46,13 @@ main = do
   connstr <- T.encodeUtf8 . T.pack <$> getEnv "BOOKS_PSQL"
   key <- T.encodeUtf8 . T.pack <$> getEnv "BOOKS_STRIPE_KEY_SECRET"
   config <- newConfig connstr key defaultPayment service
-  run 8084 (logStdoutDev (app config))
+  efrom <- addr . T.pack <$> getEnv "BOOKS_EMAIL_FROM"
+  eto <- map (addr . T.pack) . read <$> getEnv "BOOKS_EMAIL_TO"
+  let emailConfig = EmailConfig { emailFrom = efrom, emailTo = eto }
+  run 8084 (logStdoutDev (app emailConfig config))
 
-bookRenewalT :: RequestConfig -> BookRenewalMonad :~> Handler
-bookRenewalT RequestConfig{..} = NT $ \ma ->
+bookRenewalT :: EmailConfig -> RequestConfig -> BookRenewalMonad :~> Handler
+bookRenewalT emailConf RequestConfig{..} = NT $ \ma ->
   withResource reqDbconn $ \conn -> do
     let sconf = ServerConfig
               { serverStripeConfig = reqStripeConfig
@@ -50,21 +60,46 @@ bookRenewalT RequestConfig{..} = NT $ \ma ->
               , serverPayment = reqPayment
               , serverServiceTime = reqServiceTime
               }
-    (liftIO 
-      $ withTransaction conn 
-      $ flip runReaderT sconf 
-      $ runExceptT 
-      $ runRenewal ma) >>= \case
+
+    let io = flip runReaderT sconf (runExceptT (runRenewal ma))
+    let transacted = withTransaction conn (emailBracket emailConf io)
+    liftIO transacted >>= \case
         Right a -> pure a
         Left err -> throwError $ toServantErr err
 
+emailBracket :: EmailConfig -> IO a -> IO a
+emailBracket EmailConfig{..} m = do
+  async m >>= waitCatch >>= \case
+    Left e -> do
+      sendMail "localhost" $
+        simpleMail
+          emailFrom
+          emailTo
+          []
+          []
+          "500 internal server error"
+          [ plainTextPart . TL.pack $
+            "A fatal error has occurred.\n\n" ++ show e
+          ]
+      throwIO e
+    Right x -> pure x
+
+data EmailConfig
+  = EmailConfig
+    { emailFrom :: Address
+    , emailTo :: [Address]
+    }
+
 toServantErr :: RenewalError -> ServantErr
-toServantErr (Unknown s) 
-  = err500 
+toServantErr (Unknown s)
+  = err500
   { errBody = LBS.fromStrict $ T.encodeUtf8 $ T.pack s }
 toServantErr (NoSuchUser u) = err404 { errBody = encode u }
 
-app :: RequestConfig -> Application
-app c = serve api (enter (bookRenewalT c) renewalServer) where
+app :: EmailConfig -> RequestConfig -> Application
+app e c = serve api (enter (bookRenewalT e c) renewalServer) where
   api :: Proxy RenewalApi
   api = Proxy
+
+addr :: Text -> Address
+addr email = Address { addressName = Nothing, addressEmail = email }
