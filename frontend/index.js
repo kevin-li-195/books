@@ -50,9 +50,7 @@
               if(exists) {
                 hideProgress();
                 clearValidationErrors();
-                $(validationErrorsNode).append(
-                  '<li> You are already subscribed to the service ! </li>'
-                );
+                $(notification).text('You are already subscribed to the service!');
               }
               else {
                 hideProgress();
@@ -107,6 +105,7 @@
     }
 
     var validationErrorsNode = document.getElementById('validation-errors');
+    var notification = document.getElementById('notification');
 
     function clearValidationErrors() {
       while(validationErrorsNode.hasChildNodes()) {

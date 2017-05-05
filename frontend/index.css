@@ -34,6 +34,11 @@ div.payment-form {
   text-align: left;
 }
 
+#notification {
+  color: #add8e6;
+  text-align: left;
+}
+
 #table {
   display: none;
   margin: 2em auto;
