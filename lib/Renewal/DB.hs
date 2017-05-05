@@ -37,10 +37,10 @@ data DBProfile
     { dbProfileId :: ProfileId
     , dbProfileUsername :: Username
     , dbProfilePassword :: Password
-    , dbProfileEmail :: Email
-    , dbProfilePhoneNumber :: PhoneNumber
+    , dbProfileEmail :: Maybe Email
+    , dbProfilePhoneNumber :: Maybe PhoneNumber
     , dbProfileCreatedAt :: UTCTime
-    , dbProfileServiceExpiry :: UTCTime
+    , dbProfileServiceExpiry :: Maybe UTCTime
     }
 
 instance FromRow DBProfile where

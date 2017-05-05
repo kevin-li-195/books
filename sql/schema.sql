@@ -17,7 +17,7 @@ CREATE TABLE profile (
     -- for alerts
     phone_number TEXT,
     created_at TIMESTAMP NOT NULL DEFAULT ( now() ),
-    service_expiry TIMESTAMP,
+    service_expiry TIMESTAMP DEFAULT ( NULL ),
 
     UNIQUE ( username ),
     UNIQUE ( email_address ),
