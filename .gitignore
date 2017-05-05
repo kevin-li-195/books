@@ -4,6 +4,6 @@
 /bower_components/
 /deploy/
 /cabal.sandbox.config
-/.secrets
+/.*secrets
 cabal.sandbox.config
 books.secrets
