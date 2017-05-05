@@ -3,7 +3,7 @@
   var handler = null;
 
   $(document).ready(function() {
-    $('footer').fadeIn();
+    setTimeout(function() { $('footer').fadeIn(); }, 600);
 
     var progress = $('#progress');
 
