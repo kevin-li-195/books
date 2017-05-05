@@ -51,6 +51,21 @@ header = {
 
 r = s.post(POST_LINK, data=payload, headers=header)
 
+# Check if login was a success
+r_soup = BeautifulSoup(r.text, "html.parser")
+
+flag = False
+
+for x in r_soup.findAll("meta"):
+    try:
+        flag = x.attrs["http-equiv"] == "refresh"
+    except KeyError:
+        pass
+
+if not flag:
+    print("Login failed.")
+    exit(1)
+
 def extract_comments(soup):
     comments = soup.findAll(text = lambda x: isinstance(x, Comment))
     list(map(lambda c: c.extract(), comments))
