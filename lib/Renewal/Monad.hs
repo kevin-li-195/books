@@ -75,28 +75,28 @@ class (Monad m) => RenewalMonad m where
 
 -- | Use connection to perform an action.
 withConn 
-  :: (MonadBaseControl IO m, MonadReader Config m) 
+  :: (MonadBaseControl IO m, MonadReader ServerConfig m) 
   => (Connection -> m a) -> m a
 withConn f = do
-  pool <- asks dbConnPool
-  withResource pool f
+  conn <- asks serverDbconn
+  f conn
 
 newtype BookRenewalMonad a
   = BookRenewalMonad
-  { runRenewal :: ExceptT RenewalError (ReaderT Config IO) a
+  { runRenewal :: ExceptT RenewalError (ReaderT ServerConfig IO) a
   }
   deriving 
     ( Functor
     , Applicative
     , Monad
-    , MonadReader Config
+    , MonadReader ServerConfig
     , MonadIO
     , MonadBase IO
     , MonadError RenewalError
     )
 
 instance MonadBaseControl IO BookRenewalMonad where
-  type StM BookRenewalMonad a = Config -> IO (Either RenewalError a)
+  type StM BookRenewalMonad a = ServerConfig -> IO (Either RenewalError a)
 
   liftBaseWith f = liftIO (f nat)
     where nat ma = pure $ runReaderT (runExceptT $ runRenewal ma)
@@ -105,11 +105,11 @@ instance MonadBaseControl IO BookRenewalMonad where
 
 instance RenewalMonad (BookRenewalMonad) where
   updateServiceExpiry u = do
-    d <- asks serviceTime
+    d <- asks serverServiceTime
     withConn $ liftIO . DB.updateServiceExpiry u d
 
   createPayment u = do
-    i <- asks payment
+    i <- asks serverPayment
     withConn $ liftIO . DB.createPayment u i
 
   getRenewalProfile u = withConn $ liftIO . DB.getRenewalProfile u
@@ -139,6 +139,6 @@ instance RenewalMonad (BookRenewalMonad) where
   log = liftIO . hPrint stderr
 
   charge t = do
-    conf <- asks stripeConfig
-    pmt <- asks payment
+    conf <- asks serverStripeConfig
+    pmt <- asks serverPayment
     liftIO $ stripe conf $ createCharge (Amount pmt) CAD -&- t

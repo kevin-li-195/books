@@ -104,13 +104,23 @@ instance ToJSON Registrant where
     ]
 
 -- | Server config.
-data Config
-  = Config
-  { stripeConfig :: StripeConfig
-  , dbConnPool :: Pool Connection
-  , payment :: Int
+data ServerConfig
+  = ServerConfig
+  { serverStripeConfig :: StripeConfig
+  , serverDbconn :: Connection
+  , serverPayment :: Int
   -- ^ Number of cents
-  , serviceTime :: NominalDiffTime
+  , serverServiceTime :: NominalDiffTime
+  -- ^ Amount of time that we provide service
+  }
+
+data RequestConfig
+  = RequestConfig
+  { reqStripeConfig :: StripeConfig
+  , reqDbconn :: Pool Connection
+  , reqPayment :: Int
+  -- ^ Number of cents
+  , reqServiceTime :: NominalDiffTime
   -- ^ Amount of time that we provide service
   }
 
@@ -123,14 +133,14 @@ newConfig
     -- ^ Number of cents for payment
     -> NominalDiffTime
     -- ^ Amount of time for service
-    -> IO Config
+    -> IO RequestConfig
 newConfig connstr key pmt diff = do
   connPool <- createPool (connectPostgreSQL connstr) close 1 10 10
-  pure Config
-    { dbConnPool = connPool
-    , stripeConfig = StripeConfig (StripeKey key)
-    , payment = pmt
-    , serviceTime = diff
+  pure RequestConfig
+    { reqDbconn = connPool
+    , reqStripeConfig = StripeConfig (StripeKey key)
+    , reqPayment = pmt
+    , reqServiceTime = diff
     }
 
 newtype Description = Description { unDescription :: T.Text }

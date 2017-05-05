@@ -1,5 +1,6 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE RecordWildCards #-}
 
 module Main where
 
@@ -7,6 +8,7 @@ import Control.Monad.Reader
 import Control.Monad.Except
 
 import Data.Aeson
+import Data.Pool
 import qualified Data.ByteString.Lazy as LBS
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as T
@@ -17,6 +19,8 @@ import Network.Wai.Middleware.RequestLogger ( logStdoutDev )
 import Servant hiding ( NoSuchUser )
 import System.Environment ( getEnv )
 import System.Directory ( getCurrentDirectory )
+
+import Database.PostgreSQL.Simple.Transaction
 
 import Server
 import Renewal.Types
@@ -37,11 +41,22 @@ main = do
   config <- newConfig connstr key defaultPayment service
   run 8084 (logStdoutDev (app config))
 
-bookRenewalT :: Config -> BookRenewalMonad :~> Handler
-bookRenewalT c = NT $ \ma -> do
-  (liftIO $ flip runReaderT c $ runExceptT $ runRenewal ma) >>= \case
-    Right a -> pure a
-    Left err -> throwError $ toServantErr err
+bookRenewalT :: RequestConfig -> BookRenewalMonad :~> Handler
+bookRenewalT RequestConfig{..} = NT $ \ma ->
+  withResource reqDbconn $ \conn -> do
+    let sconf = ServerConfig
+              { serverStripeConfig = reqStripeConfig
+              , serverDbconn = conn
+              , serverPayment = reqPayment
+              , serverServiceTime = reqServiceTime
+              }
+    (liftIO 
+      $ withTransaction conn 
+      $ flip runReaderT sconf 
+      $ runExceptT 
+      $ runRenewal ma) >>= \case
+        Right a -> pure a
+        Left err -> throwError $ toServantErr err
 
 toServantErr :: RenewalError -> ServantErr
 toServantErr (Unknown s) 
@@ -49,7 +64,7 @@ toServantErr (Unknown s)
   { errBody = LBS.fromStrict $ T.encodeUtf8 $ T.pack s }
 toServantErr (NoSuchUser u) = err404 { errBody = encode u }
 
-app :: Config -> Application
+app :: RequestConfig -> Application
 app c = serve api (enter (bookRenewalT c) renewalServer) where
   api :: Proxy RenewalApi
   api = Proxy
