@@ -169,5 +169,5 @@ isUserActive :: Username -> Connection -> IO (Maybe Bool)
 isUserActive u dbconn = fmap fromOnly . listToMaybe <$> m where
   m = query dbconn q (Only u)
   q =
-    "select now() < service_expiry from profile \
-    \where username = ? and service_expiry is not null"
+    "select service_expiry is not null and now() < service_expiry from profile \
+    \where username = ?"
