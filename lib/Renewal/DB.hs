@@ -4,14 +4,13 @@
 
 module Renewal.DB where
 
-import Renewal.Config ( chargeAmountCts, serviceExpiryTime )
 import Renewal.Types
 
 import Control.Monad ( void )
 import Data.Aeson ( FromJSON, ToJSON )
 import Data.Maybe ( listToMaybe )
 import Data.String ( fromString )
-import Data.Time.Clock ( UTCTime )
+import Data.Time.Clock ( UTCTime, NominalDiffTime )
 import Data.Time.LocalTime
 import Database.PostgreSQL.Simple
 import Database.PostgreSQL.Simple.FromField
@@ -54,20 +53,22 @@ instance FromRow DBProfile where
     <*> (localTimeToUTC utc <$> field)
     <*> (localTimeToUTC utc <$> field)
 
--- | Sets the user's service expiry date to 'serviceExpiryTime' in the future.
-updateServiceExpiry :: Username -> Connection -> IO ()
-updateServiceExpiry u dbconn = void (execute dbconn q (Only u)) where
+-- | Add 'DiffTime' expiry to 'Username' servicable period.
+updateServiceExpiry :: Username -> NominalDiffTime -> Connection -> IO ()
+updateServiceExpiry u d dbconn = void (execute dbconn q (Only u)) where
   q = fromString $
     "update profile set \
-    \(service_expiry) = (now() + interval '" ++ serviceExpiryTime ++ "') \
+    \(service_expiry) = (now() + interval '" 
+    ++ (show $ floor d) 
+    ++ " seconds') \
     \where username = ?"
 
 -- | Creates a new payment record for the given user.
-createPayment :: Username -> Connection -> IO ()
-createPayment u dbconn = void (execute dbconn q (Only u)) where
+createPayment :: Username -> Int -> Connection -> IO ()
+createPayment u amt dbconn = void (execute dbconn q (Only u)) where
   q = fromString $
     "insert into payment (profile_id, amount_cts) \
-    \(select id, " ++ show chargeAmountCts ++ " from profile \
+    \(select id, " ++ show amt ++ " from profile \
     \where username = ?)"
 
 getRenewalProfileQuery :: Query

@@ -7,8 +7,11 @@
 
 module Renewal.Types where
 
+import Control.Monad.Reader
+
 import Data.Aeson
 import qualified Data.ByteString as BS
+import Data.Pool
 import Data.Proxy ( Proxy(Proxy) )
 import qualified Data.Text as T
 import Data.Time.Clock
@@ -34,6 +37,11 @@ type RenewalApi
 
 renewalApi :: Proxy RenewalApi
 renewalApi = Proxy
+
+-- | Error types in 'BookRenewalMonad'.
+data RenewalError
+  = Unknown String
+  | NoSuchUser Username
 
 data PaymentInfo
   = PaymentInfo
@@ -99,17 +107,30 @@ instance ToJSON Registrant where
 data Config
   = Config
   { stripeConfig :: StripeConfig
-  , dbconn :: Connection
+  , dbConnPool :: Pool Connection
+  , payment :: Int
+  -- ^ Number of cents
+  , serviceTime :: NominalDiffTime
+  -- ^ Amount of time that we provide service
   }
 
 -- | Connects to the DB with the given connection string and uses the given
 -- bytestring as the stripe key.
-newConfig :: BS.ByteString -> BS.ByteString -> IO Config
-newConfig connstr key = do
-  conn <- connectPostgreSQL connstr
+newConfig
+    :: BS.ByteString
+    -> BS.ByteString
+    -> Int
+    -- ^ Number of cents for payment
+    -> NominalDiffTime
+    -- ^ Amount of time for service
+    -> IO Config
+newConfig connstr key pmt diff = do
+  connPool <- createPool (connectPostgreSQL connstr) close 1 10 10
   pure Config
-    { dbconn = conn
+    { dbConnPool = connPool
     , stripeConfig = StripeConfig (StripeKey key)
+    , payment = pmt
+    , serviceTime = diff
     }
 
 newtype Description = Description { unDescription :: T.Text }
