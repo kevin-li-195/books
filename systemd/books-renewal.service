@@ -1,6 +1,7 @@
 [Unit]
 Description=Books Renewal Webservice
 Wants=nginx.service
+Requires=postgresql.service
 
 [Service]
 ExecStart=/home/renewal/books/bin/books
