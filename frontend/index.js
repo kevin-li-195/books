@@ -2,9 +2,9 @@
 (function() {
   var handler = null;
 
-  $('footer').fadeIn();
-
   $(document).ready(function() {
+    $('footer').fadeIn();
+
     var progress = $('#progress');
 
     function showProgress() {
