@@ -30,13 +30,13 @@ div.payment-form {
 }
 
 #validation-errors {
-  color: #faa;
-  text-align: left;
+  color: #FFC0CB;
+  text-align: center;
 }
 
 #notification {
-  color: #add8e6;
-  text-align: left;
+  color: #000080;
+  text-align: center;
 }
 
 #table {
