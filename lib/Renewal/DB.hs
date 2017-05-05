@@ -160,7 +160,7 @@ getAllActiveUsers dbconn = query_ dbconn q where
   q =
     "select id, username, password, email_address, phone_number, created_at, service_expiry \
     \from profile \
-    \where service_expiry > now()"
+    \where service_expiry is not null and service_expiry > now()"
 
 -- | Check whether a user has paid for service.
 --
