@@ -14,7 +14,7 @@
     }
 
     handler = StripeCheckout.configure({
-      key: 'pk_test_AEzcSG6wdn2OKEGPmMVZSWcK',
+      key: 'STRIPE_CHECKOUT_SECRET_KEY_PLEASE_REPLACE',
       image: 'https://stripe.com/img/documentation/checkout/marketplace.png',
       locale: 'auto', // TODO change to en_CA
       token: function(token) {

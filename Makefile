@@ -1,10 +1,18 @@
-.PHONY: frontend-deploy frontend backend-deploy backend clean update gen-client clean-deploy bg bg-deploy
+.PHONY: frontend-deploy frontend backend-deploy backend clean update gen-client clean-deploy bg bg-deploy secrets-deploy
 
 $(shell mkdir -p deploy)
 
+PRODUCTION?=no
+
 DEPLOYDIR=/srv/http/renewal
 
-deploy: frontend-deploy backend-deploy bg-deploy
+deploy: secrets-deploy frontend-deploy backend-deploy bg-deploy
+
+secrets-deploy:
+ifeq ($(PRODUCTION),yes)
+	ln -sf .production-secrets .secrets
+else
+	ln -sf .test-secrets .secrets
 
 clean-deploy:
 	-rm -rf deploy/*
@@ -20,8 +28,10 @@ deploy/index.css: frontend/index.css
 deploy/index.html: frontend/index.html
 	cp $< $@
 
+PUBKEY=$(shell cat .secrets | grep BOOK_STRIPE_KEY_PUB | cut -d= -f2)
+
 deploy/index.js: frontend/index.js dist/client.js
-	cat $^ > $@
+	cat $^ | sed "s/STRIPE_CHECKOUT_SECRET_KEY_PLREASE_REPLACE/$(PUBKEY)" > $@
 
 dist/client.js: gen-client
 	cabal run gen-client $@
