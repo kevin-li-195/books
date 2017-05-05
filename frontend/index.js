@@ -2,8 +2,7 @@
 (function() {
   var handler = null;
 
-  $('footer').css('bottom', 'initial');
-  $('footer').css('position', 'initial');
+  $('footer').fadeIn();
 
   $(document).ready(function() {
     var progress = $('#progress');

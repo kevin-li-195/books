@@ -62,8 +62,7 @@ table#table, #table td, #table th {
 */
 
 footer {
-  position: absolute;
-  bottom: 0;
+  display: none;
 }
 
 footer, footer a {
