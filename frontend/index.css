@@ -52,5 +52,9 @@ table#table, #table td, #table th {
   padding: 0.5em 0.1em;
 }
 
+footer {
+  font-size: 75%;
+}
+
 /* vim: shiftwidth=2 tw=79
  */
