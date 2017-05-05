@@ -27,7 +27,14 @@
           },
           function() {
             hideProgress();
-            alert('yay');
+            // Give important information and say thank you.
+            $(notification).text("Thank you for registering! Your books will be renewed " +
+              "every day for the next 4 months. Please note that others may still recall " +
+              "the books that you have borrowed, and you may have to return them eventually.\n" +
+              "Soon you should receive an email containing a unique link from which you can " +
+              "see your loan status.\nIf you have any questions, please email " +
+              "mcgillrenewal@gmail.com."
+            );
           },
           function() {
             hideProgress();
