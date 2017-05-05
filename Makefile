@@ -13,6 +13,7 @@ ifeq ($(PRODUCTION),yes)
 	ln -sf .production-secrets .secrets
 else
 	ln -sf .test-secrets .secrets
+endif
 
 clean-deploy:
 	-rm -rf deploy/*
