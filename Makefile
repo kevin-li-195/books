@@ -29,7 +29,7 @@ deploy/index.css: frontend/index.css
 deploy/index.html: frontend/index.html
 	cp $< $@
 
-PUBKEY=$(shell cat .secrets | grep BOOK_STRIPE_KEY_PUB | cut -d= -f2)
+PUBKEY=$(shell cat .secrets | grep BOOKS_STRIPE_KEY_PUB | cut -d= -f2)
 
 deploy/index.js: frontend/index.js dist/client.js
 	cat $^ | sed "s/STRIPE_CHECKOUT_SECRET_KEY_PLEASE_REPLACE/$(PUBKEY)/" > $@
