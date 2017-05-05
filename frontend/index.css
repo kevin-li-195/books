@@ -4,8 +4,6 @@ body {
 
 div.page-content {
   background-image: url('/bg.jpg');
-  max-width: 8.5in;
-  margin: auto;
 }
 
 div.payment-form {
@@ -38,6 +36,11 @@ div.payment-form {
 
 #table {
   display: none;
+  margin: 2em auto;
+}
+
+.in85 {
+  max-width: 8.5in;
 }
 
 /*
