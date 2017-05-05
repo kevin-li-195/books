@@ -4,13 +4,14 @@
 
 module Renewal.DB where
 
+import Renewal.Config ( chargeAmountCts, serviceExpiryTime )
 import Renewal.Types
 
 import Control.Monad ( void )
 import Data.Aeson ( FromJSON, ToJSON )
 import Data.Maybe ( listToMaybe )
 import Data.String ( fromString )
-import Data.Time.Clock ( UTCTime, NominalDiffTime )
+import Data.Time.Clock ( UTCTime )
 import Data.Time.LocalTime
 import Database.PostgreSQL.Simple
 import Database.PostgreSQL.Simple.FromField
@@ -51,15 +52,15 @@ instance FromRow DBProfile where
     <*> field
     <*> field
     <*> (localTimeToUTC utc <$> field)
-    <*> (localTimeToUTC utc <$> field)
+    <*> (fmap (localTimeToUTC utc) <$> field)
 
 -- | Add 'DiffTime' expiry to 'Username' servicable period.
 updateServiceExpiry :: Username -> NominalDiffTime -> Connection -> IO ()
 updateServiceExpiry u d dbconn = void (execute dbconn q (Only u)) where
   q = fromString $
     "update profile set \
-    \(service_expiry) = (now() + interval '" 
-    ++ (show $ floor d) 
+    \(service_expiry) = (now() + interval '"
+    ++ (show $ floor d)
     ++ " seconds') \
     \where username = ?"
 
