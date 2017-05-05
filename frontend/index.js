@@ -213,7 +213,7 @@
     var table = $('#table');
 
     function clearTable() {
-      table.children('td').remove();
+      table.find('td').remove();
     }
 
     function constructTable(books) {
