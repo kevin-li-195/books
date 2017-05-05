@@ -40,8 +40,7 @@ div.payment-form {
   display: none;
 }
 
-
-
+/*
 table#table, #table td, #table th {
   border-collapse: collapse;
   border: 1px solid #555;
@@ -51,6 +50,7 @@ table#table, #table td, #table th {
 #table td, #table th {
   padding: 0.5em 0.1em;
 }
+*/
 
 footer, footer a {
   font-size: 75%;

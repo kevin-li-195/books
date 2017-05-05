@@ -190,14 +190,15 @@
     function constructTable(books) {
       clearTable();
       books.forEach(function(book) {
+        var s = '<td class="mdl-data-table__cell--non-numeric"></td>';
         var tr = $('<tr></tr>');
-        tr.append($('<td></td>').text(book.description));
-        tr.append($('<td></td>').text(book.library));
-        tr.append($('<td></td>').text(book.accruingFine));
-        tr.append($('<td></td>').text(book.dueDate + ' ' + book.dueHour));
-        tr.append($('<td></td>').text(book.year));
-        tr.append($('<td></td>').text(book.numberOfRenewals));
-        table.append(tr);
+        tr.append($(s).text(book.description));
+        tr.append($(s).text(book.library));
+        tr.append($(s).text(book.accruingFine));
+        tr.append($(s).text(book.dueDate + ' ' + book.dueHour));
+        tr.append($(s).text(book.year));
+        tr.append($(s).text(book.numberOfRenewals));
+        table.children('tbody').append(tr);
       });
       table.show();
     }
